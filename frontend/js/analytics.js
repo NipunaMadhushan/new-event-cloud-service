@@ -4,10 +4,11 @@
  * navigator.sendBeacon (falling back to fetch keepalive) to the
  * analytics-service, which streams them into ClickHouse.
  *
- * Captures three differentiated, event-specific metric families:
- *   1. session_start      — traffic attribution (referrer/UTM/landing section)
- *   2. cta_click           — registration conversion funnel + video engagement
- *   3. section_engagement  — per-section dwell time + Our Programs track views
+ * Captures three event types, matching the coursework's required taxonomy:
+ *   1. visit  — traffic attribution (referrer/UTM/landing section), once per session
+ *   2. click  — every meaningful click: register CTAs, form submit, video plays,
+ *               Our Programs track-tab switches
+ *   3. scroll — per-section dwell time (scroll-depth engagement) via IntersectionObserver
  */
 (function () {
     "use strict";
@@ -84,11 +85,11 @@
         });
     }
 
-    // ---- 1. Session / attribution ----------------------------------------
+    // ---- 1. visit: session / attribution -----------------------------------
 
     function captureSessionStart() {
         var params = new URLSearchParams(window.location.search);
-        track("session_start", {
+        track("visit", {
             referrer: document.referrer || "direct",
             utmSource: params.get("utm_source"),
             utmMedium: params.get("utm_medium"),
@@ -99,39 +100,31 @@
         });
     }
 
-    // ---- 2. CTA conversion funnel + video engagement ----------------------
+    // ---- 2. click: CTAs, form submit, video plays, program tab switches ---
 
     function bindCtaTracking() {
         var heroRegisterBtn = document.querySelector("#intro a.btn-danger[href='#register']");
         if (heroRegisterBtn) {
             heroRegisterBtn.addEventListener("click", function () {
-                track("cta_click", { target: "register_hero_button", section: "intro" });
+                track("click", { target: "register_hero_button", section: "intro" });
             });
         }
 
         var navRegisterLink = document.querySelector(".navbar-nav a[href='#register']");
         if (navRegisterLink) {
             navRegisterLink.addEventListener("click", function () {
-                track("cta_click", { target: "register_nav_link", section: "navbar" });
+                track("click", { target: "register_nav_link", section: "navbar" });
             });
         }
 
+        // Tracking only — registration.js owns the actual submit handling/preventDefault
+        // and the resulting success/error feedback shown to the user.
         var registerForm = document.querySelector("#register form");
         if (registerForm) {
-            registerForm.addEventListener("submit", function (event) {
-                event.preventDefault();
-                track("cta_click", { target: "register_form_submit", section: "register" });
-                showRegisterThankYou(registerForm);
+            registerForm.addEventListener("submit", function () {
+                track("click", { target: "register_form_submit", section: "register" });
             });
         }
-    }
-
-    function showRegisterThankYou(form) {
-        var notice = document.createElement("p");
-        notice.className = "analytics-thank-you";
-        notice.style.color = "#fff";
-        notice.textContent = "Thanks! This demo form does not submit anywhere — your interest was recorded.";
-        form.appendChild(notice);
     }
 
     function bindVideoTracking() {
@@ -145,12 +138,17 @@
                 onStateChange: function (event) {
                     if (event.data === window.YT.PlayerState.PLAYING && !played) {
                         played = true;
-                        track("cta_click", { target: "video_play", section: "video" });
+                        track("click", { target: "video_play", section: "video" });
                     }
                 }
             }
         });
     }
+
+    // programs.js renders the Our Programs tabs dynamically (after fetching real
+    // data), so those elements don't exist yet at DOMContentLoaded time here — it
+    // tracks its own tab clicks via this small public API instead.
+    window.NewEventAnalytics = { track: track };
 
     function loadYouTubeApiThenBindVideo() {
         if (!document.getElementById("promo-video")) {
@@ -166,7 +164,7 @@
         firstScript.parentNode.insertBefore(tag, firstScript);
     }
 
-    // ---- 3. Section engagement: dwell time + Our Programs track views -----
+    // ---- 3. scroll: per-section dwell time (scroll-depth engagement) ------
 
     function bindSectionDwellTracking() {
         if (!("IntersectionObserver" in window)) {
@@ -203,18 +201,9 @@
         function recordDwell(sectionId, startedAt) {
             var dwellMs = Date.now() - startedAt;
             if (dwellMs >= MIN_DWELL_MS) {
-                track("section_engagement", { metric: "dwell_time", sectionId: sectionId, dwellMs: dwellMs });
+                track("scroll", { sectionId: sectionId, dwellMs: dwellMs });
             }
         }
-    }
-
-    function bindProgramTrackTracking() {
-        document.querySelectorAll("#program a[data-toggle='tab']").forEach(function (tabLink) {
-            tabLink.addEventListener("click", function () {
-                var trackName = (tabLink.textContent || "").trim();
-                track("section_engagement", { metric: "track_view", track: trackName });
-            });
-        });
     }
 
     // ---- Boot ---------------------------------------------------------------
@@ -223,7 +212,6 @@
         captureSessionStart();
         bindCtaTracking();
         bindSectionDwellTracking();
-        bindProgramTrackTracking();
         loadYouTubeApiThenBindVideo();
     });
 
