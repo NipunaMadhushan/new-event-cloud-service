@@ -1,0 +1,42 @@
+# Values for the bitnami/clickhouse chart — lightweight single-node deployment.
+#
+# Deliberately NOT the full ClickStack bundle (ClickHouse Operator + HyperDX +
+# OTel Collector + MongoDB) that the coursework guidelines linked — see PLAN.md's
+# guideline-adjustments log (#7) for why. Just ClickHouse itself, no clustering:
+# shards=1/replicaCount=1 means no replication, so ClickHouse Keeper (the
+# coordination service the chart deploys by default for multi-replica setups)
+# isn't needed either — keeping this cheap and simple.
+
+shards: 1
+replicaCount: 1
+
+keeper:
+  enabled: false
+
+auth:
+  username: default
+  existingSecret: clickhouse-credentials
+  existingSecretKey: password
+
+service:
+  type: ClusterIP
+
+persistence:
+  enabled: true
+  size: 5Gi
+
+resourcesPreset: "small"
+
+initdbScripts:
+  01-schema.sql: |
+    CREATE TABLE IF NOT EXISTS web_events
+    (
+        session_id String,
+        event_type LowCardinality(String),
+        event_timestamp DateTime64(3),
+        page String,
+        payload String,
+        ingested_at DateTime DEFAULT now()
+    )
+    ENGINE = MergeTree
+    ORDER BY (event_type, event_timestamp);
