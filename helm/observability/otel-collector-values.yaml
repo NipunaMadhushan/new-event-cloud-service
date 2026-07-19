@@ -1,0 +1,97 @@
+# Values for open-telemetry/opentelemetry-collector — receives logs (from
+# Fluent Bit, via OTLP/HTTP) and traces (from the Ballerina services' built-in
+# OTel tracing, also via OTLP) on the same otlp receiver, exports both into
+# the same lightweight ClickHouse instance used for web analytics
+# (helm/clickhouse). Metrics stay on Prometheus separately (PLAN.md
+# guideline-adjustments #9) — no metrics pipeline is defined here.
+#
+# NOTE: originally paired Fluent Bit's `forward` output with a fluentforward
+# receiver here. TCP connectivity worked and Fluent Bit reported 0 errors,
+# but no data ever reached ClickHouse — a known interoperability gap between
+# Fluent Bit's forward implementation and this receiver. Simplified to just
+# otlp for both signals instead — one receiver, one protocol, confirmed
+# working end-to-end (see DEPLOYMENT_GUIDE.md §5 gotchas for the full story).
+
+fullnameOverride: otel-collector
+
+mode: deployment
+
+# The chart now requires an explicit image choice (see chart UPGRADING.md).
+# The default community "k8s" distribution does NOT include clickhouseexporter
+# — verified directly against the distro manifests at
+# github.com/open-telemetry/opentelemetry-collector-releases. Only "contrib" does.
+image:
+  repository: otel/opentelemetry-collector-contrib
+
+command:
+  name: otelcol-contrib
+
+# ClickHouse admin password, reused from the same secret helm/clickhouse
+# already created — avoids duplicating the credential. Also copied into this
+# namespace (observability) since K8s Secrets are namespace-scoped.
+extraEnvs:
+  - name: CLICKHOUSE_PASSWORD
+    valueFrom:
+      secretKeyRef:
+        name: clickhouse-credentials
+        key: password
+
+ports:
+  otlp:
+    enabled: true
+  otlp-http:
+    enabled: true
+  jaeger-compact:
+    enabled: false
+  jaeger-thrift:
+    enabled: false
+  jaeger-grpc:
+    enabled: false
+  zipkin:
+    enabled: false
+
+config:
+  extensions:
+    health_check:
+      endpoint: ${env:MY_POD_IP}:13133
+
+  receivers:
+    otlp:
+      protocols:
+        grpc:
+          endpoint: ${env:MY_POD_IP}:4317
+        http:
+          endpoint: ${env:MY_POD_IP}:4318
+
+  processors:
+    batch: {}
+    memory_limiter:
+      check_interval: 5s
+      limit_percentage: 80
+      spike_limit_percentage: 25
+
+  exporters:
+    # clickhouseexporter auto-creates its own database/tables (create_schema:
+    # true) — no manual schema step needed here, unlike RDS/ClickHouse's own
+    # web_events table.
+    clickhouse:
+      endpoint: "tcp://clickhouse.data.svc.cluster.local:9000?username=default&password=${env:CLICKHOUSE_PASSWORD}&dial_timeout=10s"
+      database: otel
+      ttl: 72h
+      create_schema: true
+      logs_table_name: otel_logs
+      traces_table_name: otel_traces
+
+  service:
+    extensions:
+      - health_check
+    pipelines:
+      traces:
+        receivers: [otlp]
+        processors: [memory_limiter, batch]
+        exporters: [clickhouse]
+      logs:
+        receivers: [otlp]
+        processors: [memory_limiter, batch]
+        exporters: [clickhouse]
+      metrics: null

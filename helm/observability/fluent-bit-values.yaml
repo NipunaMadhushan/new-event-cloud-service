@@ -1,0 +1,22 @@
+# Values for fluent/fluent-bit — DaemonSet tailing container logs on every
+# node, forwarding to the OTel Collector's otlp receiver (OTLP/HTTP), which
+# then exports into ClickHouse. Inputs/filters keep the chart's sensible
+# defaults (tail container logs + kubernetes metadata enrichment); only the
+# output is overridden — the chart defaults to Elasticsearch, which we don't run.
+#
+# NOTE: originally used the `forward` output -> otel-collector's fluentforward
+# receiver. TCP connectivity worked and Fluent Bit reported 0 errors/0 drops,
+# but no data ever reached ClickHouse — a known interoperability gap between
+# Fluent Bit's forward implementation and that particular receiver. Switched
+# to Fluent Bit's native OpenTelemetry output (OTLP/HTTP) hitting the same
+# otlp receiver already used for traces — confirmed rows landing in
+# ClickHouse's otel.otel_logs table within ~10s of applying this.
+config:
+  outputs: |
+    [OUTPUT]
+        Name          opentelemetry
+        Match         kube.*
+        Host          otel-collector.observability.svc.cluster.local
+        Port          4318
+        Logs_uri      /v1/logs
+        Tls           Off
