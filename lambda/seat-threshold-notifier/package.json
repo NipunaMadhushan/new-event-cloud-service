@@ -1,0 +1,9 @@
+{
+  "name": "seat-threshold-notifier",
+  "version": "1.0.0",
+  "private": true,
+  "main": "index.js",
+  "dependencies": {
+    "@aws-sdk/client-ses": "^3.600.0"
+  }
+}

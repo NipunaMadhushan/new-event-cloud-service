@@ -67,6 +67,7 @@ spec:
             - "-CdbName=$(DB_NAME)"
             - "-CservicePort={{ $.Values.containerPort }}"
             - "-CeventServiceUrl={{ $.Values.eventServiceUrl }}"
+            - "-CnotifierUrl={{ $.Values.notifierUrl }}"
           readinessProbe:
             httpGet:
               path: /healthz

@@ -25,6 +25,11 @@ database:
 # event-service's stable Service, same "app" namespace — resolves directly.
 eventServiceUrl: http://event-service:8081
 
+# API Gateway invoke URL fronting the seat-threshold-notifier Lambda (§7.1).
+# Left blank until that Lambda is deployed — set via `--set notifierUrl=...`
+# at install/upgrade time rather than committing the real URL here.
+notifierUrl: ""
+
 resources:
   requests:
     cpu: 100m

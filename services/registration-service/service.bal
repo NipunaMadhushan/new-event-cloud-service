@@ -12,10 +12,25 @@ final sql:ParameterizedQuery REGISTRATION_COLUMNS = `registration_id as registra
 function selectRegistrationQuery(sql:ParameterizedQuery whereClause) returns sql:ParameterizedQuery
     => sql:queryConcat(`SELECT `, REGISTRATION_COLUMNS, ` FROM registrations `, whereClause);
 
-// Placeholder for the serverless seat-threshold notifier (section 3.3 of the plan) —
-// will become an HTTP call to the API Gateway URL fronting the notifier Lambda.
+configurable string notifierUrl = "";
+
+// Calls the API Gateway URL fronting the seat-threshold-notifier Lambda (§7.1 of
+// the deployment guide). notifierUrl is blank until that Lambda exists, so this
+// stays a no-op logger in local/dev until it's set via Helm.
 function notifySeatsLow(string eventId, int seatsAvailable) {
-    log:printInfo(string `Seats low for event ${eventId}: ${seatsAvailable} remaining (Lambda trigger not yet wired up)`);
+    if notifierUrl == "" {
+        log:printInfo(string `Seats low for event ${eventId}: ${seatsAvailable} remaining (notifierUrl not configured)`);
+        return;
+    }
+    http:Client|error notifierClient = new (notifierUrl);
+    if notifierClient is error {
+        log:printError("Failed to create notifier HTTP client", notifierClient);
+        return;
+    }
+    http:Response|http:ClientError result = notifierClient->post("/", {eventId, seatsAvailable});
+    if result is http:ClientError {
+        log:printError("Failed to notify seat-threshold Lambda", result);
+    }
 }
 
 service / on registrationListener {
