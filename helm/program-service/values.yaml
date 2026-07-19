@@ -9,10 +9,10 @@ activeSlot: blue
 slots:
   blue:
     tag: latest
-    replicas: 2
+    replicas: 1
   green:
     tag: latest
-    replicas: 2
+    replicas: 1
 
 containerPort: 8082
 servicePort: 8082
@@ -29,6 +29,6 @@ resources:
     memory: 320Mi
 
 autoscaling:
-  minReplicas: 2
+  minReplicas: 1
   maxReplicas: 4
   targetCPUUtilizationPercentage: 70
