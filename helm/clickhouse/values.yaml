@@ -7,6 +7,13 @@
 # coordination service the chart deploys by default for multi-replica setups)
 # isn't needed either — keeping this cheap and simple.
 
+# Broadcom moved Bitnami's actively-maintained images behind a paywall in 2025;
+# docker.io/bitnami/clickhouse now has zero public tags. "bitnamilegacy" is the
+# frozen (no future updates, but functional) archive of the old free images —
+# same tag the chart's default already expects, just a different namespace.
+image:
+  repository: bitnamilegacy/clickhouse
+
 shards: 1
 replicaCount: 1
 
@@ -27,8 +34,18 @@ persistence:
 
 resourcesPreset: "small"
 
+# Must be a .sh file — the Bitnami entrypoint's clickhouse_custom_scripts()
+# only looks for files matching *.sh (via `find ... -regex ".*\.sh"`); a .sql
+# file here is silently skipped entirely, no error. Verified against this
+# chart/image directly: initdbScripts.01-schema.sql never ran, and manual
+# clickhouse-client execution was needed to create the table on the already-
+# running pod. This wraps the same SQL in a shell script so a *fresh* volume
+# picks it up automatically going forward.
 initdbScripts:
-  01-schema.sql: |
+  01-schema.sh: |
+    #!/bin/bash
+    set -e
+    clickhouse-client --user default --password "$(cat /opt/bitnami/clickhouse/secrets/password)" -n <<-EOSQL
     CREATE TABLE IF NOT EXISTS web_events
     (
         session_id String,
@@ -40,3 +57,4 @@ initdbScripts:
     )
     ENGINE = MergeTree
     ORDER BY (event_type, event_timestamp);
+    EOSQL
