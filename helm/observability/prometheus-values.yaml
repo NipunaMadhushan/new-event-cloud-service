@@ -1,0 +1,58 @@
+# Values for prometheus-community/kube-prometheus-stack — Prometheus +
+# Grafana + Alertmanager, providing the "metrics" leg of observability
+# (guideline #9). Logs/traces already flow separately into ClickHouse via
+# Fluent Bit + the OTel Collector (see the other two files in this folder).
+# Grafana gets both as data sources — Prometheus (automatic) and ClickHouse
+# (via the official grafana-clickhouse-datasource plugin) — so metrics, logs,
+# and traces are all queryable from one place.
+#
+# The ClickHouse datasource password is NOT set here — Helm's `tpl` on
+# additionalDataSources doesn't do shell-style env substitution, so a
+# placeholder would either be committed as a real secret or silently sent
+# as a literal string. Supply it via --set at install time instead (same
+# pattern as every other secret in this project):
+#
+#   CH_PASSWORD=$(kubectl get secret clickhouse-credentials -n data -o jsonpath='{.data.password}' | base64 -d)
+#   helm install kube-prometheus-stack prometheus-community/kube-prometheus-stack \
+#     --namespace observability -f helm/observability/prometheus-values.yaml \
+#     --set-string "grafana.additionalDataSources[0].secureJsonData.password=$CH_PASSWORD"
+
+prometheus:
+  prometheusSpec:
+    retention: 2d
+    resources: {}
+    storageSpec:
+      volumeClaimTemplate:
+        spec:
+          accessModes: ["ReadWriteOnce"]
+          resources:
+            requests:
+              storage: 5Gi
+
+alertmanager:
+  alertmanagerSpec:
+    resources: {}
+
+grafana:
+  # Real admin credentials come from a K8s Secret created separately (see
+  # DEPLOYMENT_GUIDE.md §5.4) — never commit a real password here.
+  admin:
+    existingSecret: grafana-admin-credentials
+    userKey: admin-user
+    passwordKey: admin-password
+
+  plugins:
+    - grafana-clickhouse-datasource
+
+  additionalDataSources:
+    - name: ClickHouse
+      type: grafana-clickhouse-datasource
+      access: proxy
+      jsonData:
+        host: clickhouse.data.svc.cluster.local
+        port: 9000
+        protocol: native
+        username: default
+        defaultDatabase: default
+      secureJsonData:
+        password: "REPLACED_VIA_HELM_SET_AT_INSTALL_TIME"
