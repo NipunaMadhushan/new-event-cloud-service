@@ -1,0 +1,35 @@
+# See helm/event-service/values.yaml for the blue/green design notes — same
+# pattern here. No database, no extra args — nginx.conf already has the
+# /api/* proxy rules baked into the image, pointing at the backend services'
+# stable Service names (event-service/program-service/registration-service),
+# which don't change between blue/green — so nothing here needs to vary
+# beyond the image tag itself.
+
+image:
+  repository: ghcr.io/nipunamadhushan/frontend
+
+activeSlot: blue
+
+slots:
+  blue:
+    tag: latest
+    replicas: 2
+  green:
+    tag: latest
+    replicas: 2
+
+containerPort: 80
+servicePort: 80
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 64Mi
+  limits:
+    cpu: 200m
+    memory: 128Mi
+
+autoscaling:
+  minReplicas: 2
+  maxReplicas: 4
+  targetCPUUtilizationPercentage: 70

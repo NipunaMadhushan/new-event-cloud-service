@@ -1,0 +1,6 @@
+apiVersion: v2
+name: registration-service
+description: Blue/green Helm chart for the registration-service microservice
+type: application
+version: 0.1.0
+appVersion: "1.0.0"

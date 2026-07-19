@@ -1,0 +1,39 @@
+# See helm/event-service/values.yaml for the blue/green design notes — same
+# pattern here, plus eventServiceUrl (calls event-service's /reserve endpoint
+# on every registration — same pattern already verified locally via
+# docker-compose's container-name DNS, just K8s Service DNS instead).
+
+image:
+  repository: ghcr.io/nipunamadhushan/registration-service
+
+activeSlot: blue
+
+slots:
+  blue:
+    tag: latest
+    replicas: 2
+  green:
+    tag: latest
+    replicas: 2
+
+containerPort: 8083
+servicePort: 8083
+
+database:
+  secretName: new-event-db-credentials
+
+# event-service's stable Service, same "app" namespace — resolves directly.
+eventServiceUrl: http://event-service:8081
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 160Mi
+  limits:
+    cpu: 400m
+    memory: 320Mi
+
+autoscaling:
+  minReplicas: 2
+  maxReplicas: 4
+  targetCPUUtilizationPercentage: 70

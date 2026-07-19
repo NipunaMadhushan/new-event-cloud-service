@@ -1,0 +1,22 @@
+# Single external endpoint (coursework requirement). Routes everything to the
+# frontend Service — its nginx.conf already proxies /api/events, /api/programs,
+# /api/registrations to the backend services' stable Service names internally
+# (same logic already verified working in local/docker-compose.yml), so the
+# ingress itself doesn't need per-path routing rules.
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: new-event-ingress
+  namespace: app
+spec:
+  ingressClassName: nginx
+  rules:
+    - http:
+        paths:
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 80

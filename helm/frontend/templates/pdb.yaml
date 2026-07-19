@@ -1,0 +1,13 @@
+{{- range $slot, $cfg := .Values.slots }}
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: {{ $.Chart.Name }}-{{ $slot }}
+spec:
+  minAvailable: 1
+  selector:
+    matchLabels:
+      app: {{ $.Chart.Name }}
+      slot: {{ $slot }}
+---
+{{- end }}

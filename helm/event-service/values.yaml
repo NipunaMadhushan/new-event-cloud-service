@@ -1,0 +1,40 @@
+# Blue/green: this one chart renders BOTH Deployments (event-service-blue,
+# event-service-green) always; the stable Service just selects on
+# activeSlot. CI/CD deploys a new image to whichever slot ISN'T active, then
+# flips activeSlot (a Service-selector patch, not a chart re-render) to cut
+# traffic over. Keeping both slots warm (not scaled to 0) means the previous
+# version is an instant rollback, not a redeploy.
+
+image:
+  repository: ghcr.io/nipunamadhushan/event-service
+
+activeSlot: blue
+
+slots:
+  blue:
+    tag: latest
+    replicas: 2
+  green:
+    tag: latest
+    replicas: 2
+
+containerPort: 8081
+servicePort: 8081
+
+# Same K8s Secret created in DEPLOYMENT_GUIDE.md §3.3 (dbHost/dbPort/dbUser/
+# dbPassword/dbName keys) — must exist in this namespace before installing.
+database:
+  secretName: new-event-db-credentials
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 160Mi
+  limits:
+    cpu: 400m
+    memory: 320Mi
+
+autoscaling:
+  minReplicas: 2
+  maxReplicas: 4
+  targetCPUUtilizationPercentage: 70

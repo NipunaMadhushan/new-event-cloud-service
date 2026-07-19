@@ -1,0 +1,51 @@
+{{- range $slot, $cfg := .Values.slots }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $.Chart.Name }}-{{ $slot }}
+  labels:
+    app: {{ $.Chart.Name }}
+    slot: {{ $slot }}
+spec:
+  replicas: {{ $cfg.replicas }}
+  selector:
+    matchLabels:
+      app: {{ $.Chart.Name }}
+      slot: {{ $slot }}
+  template:
+    metadata:
+      labels:
+        app: {{ $.Chart.Name }}
+        slot: {{ $slot }}
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app: {{ $.Chart.Name }}
+                    slot: {{ $slot }}
+                topologyKey: kubernetes.io/hostname
+      containers:
+        - name: {{ $.Chart.Name }}
+          image: "{{ $.Values.image.repository }}:{{ $cfg.tag }}"
+          ports:
+            - containerPort: {{ $.Values.containerPort }}
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: {{ $.Values.containerPort }}
+            initialDelaySeconds: 3
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: {{ $.Values.containerPort }}
+            initialDelaySeconds: 10
+            periodSeconds: 20
+          resources:
+            {{- toYaml $.Values.resources | nindent 12 }}
+---
+{{- end }}

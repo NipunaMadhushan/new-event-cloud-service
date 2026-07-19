@@ -1,0 +1,85 @@
+{{- range $slot, $cfg := .Values.slots }}
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: {{ $.Chart.Name }}-{{ $slot }}
+  labels:
+    app: {{ $.Chart.Name }}
+    slot: {{ $slot }}
+spec:
+  replicas: {{ $cfg.replicas }}
+  selector:
+    matchLabels:
+      app: {{ $.Chart.Name }}
+      slot: {{ $slot }}
+  template:
+    metadata:
+      labels:
+        app: {{ $.Chart.Name }}
+        slot: {{ $slot }}
+    spec:
+      affinity:
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+            - weight: 100
+              podAffinityTerm:
+                labelSelector:
+                  matchLabels:
+                    app: {{ $.Chart.Name }}
+                    slot: {{ $slot }}
+                topologyKey: kubernetes.io/hostname
+      containers:
+        - name: {{ $.Chart.Name }}
+          image: "{{ $.Values.image.repository }}:{{ $cfg.tag }}"
+          ports:
+            - containerPort: {{ $.Values.containerPort }}
+          env:
+            - name: DB_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $.Values.database.secretName }}
+                  key: dbHost
+            - name: DB_PORT
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $.Values.database.secretName }}
+                  key: dbPort
+            - name: DB_USER
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $.Values.database.secretName }}
+                  key: dbUser
+            - name: DB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $.Values.database.secretName }}
+                  key: dbPassword
+            - name: DB_NAME
+              valueFrom:
+                secretKeyRef:
+                  name: {{ $.Values.database.secretName }}
+                  key: dbName
+          args:
+            - "-CdbHost=$(DB_HOST)"
+            - "-CdbPort=$(DB_PORT)"
+            - "-CdbUser=$(DB_USER)"
+            - "-CdbPassword=$(DB_PASSWORD)"
+            - "-CdbName=$(DB_NAME)"
+            - "-CservicePort={{ $.Values.containerPort }}"
+            - "-CeventServiceUrl={{ $.Values.eventServiceUrl }}"
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: {{ $.Values.containerPort }}
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: {{ $.Values.containerPort }}
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          resources:
+            {{- toYaml $.Values.resources | nindent 12 }}
+---
+{{- end }}

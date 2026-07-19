@@ -1,0 +1,34 @@
+# See helm/event-service/values.yaml for the blue/green design notes — same
+# pattern here.
+
+image:
+  repository: ghcr.io/nipunamadhushan/program-service
+
+activeSlot: blue
+
+slots:
+  blue:
+    tag: latest
+    replicas: 2
+  green:
+    tag: latest
+    replicas: 2
+
+containerPort: 8082
+servicePort: 8082
+
+database:
+  secretName: new-event-db-credentials
+
+resources:
+  requests:
+    cpu: 100m
+    memory: 160Mi
+  limits:
+    cpu: 400m
+    memory: 320Mi
+
+autoscaling:
+  minReplicas: 2
+  maxReplicas: 4
+  targetCPUUtilizationPercentage: 70

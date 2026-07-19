@@ -1,0 +1,17 @@
+# The stable Service — this is what CI/CD flips for blue/green cutover
+# (kubectl patch svc event-service -p '{"spec":{"selector":{"slot":"green"}}}'),
+# not something re-rendered by helm upgrade per deploy.
+apiVersion: v1
+kind: Service
+metadata:
+  name: {{ .Chart.Name }}
+  labels:
+    app: {{ .Chart.Name }}
+spec:
+  selector:
+    app: {{ .Chart.Name }}
+    slot: {{ .Values.activeSlot }}
+  ports:
+    - port: {{ .Values.servicePort }}
+      targetPort: {{ .Values.containerPort }}
+  type: ClusterIP
