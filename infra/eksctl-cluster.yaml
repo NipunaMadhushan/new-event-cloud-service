@@ -7,8 +7,11 @@ metadata:
 managedNodeGroups:
   - name: ng-1
     instanceType: t3.medium
-    desiredCapacity: 2
-    minSize: 2
+    # Scaled 2->3 to fix the 17-pods/node (VPC CNI ENI limit) ceiling once
+    # analytics-service pushed baseline pod count to exactly 34 (2x17) with
+    # zero headroom for rolling updates. See DEPLOYMENT_GUIDE.md §6.5/§7.3.
+    desiredCapacity: 3
+    minSize: 3
     maxSize: 4
     availabilityZones: ["us-east-1a", "us-east-1b"]
     volumeSize: 20
