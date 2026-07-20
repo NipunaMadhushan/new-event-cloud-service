@@ -35,11 +35,6 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: TEMP debug OIDC claims
-        run: |
-          IDTOKEN=$(curl -sS -H "Authorization: bearer $ACTIONS_ID_TOKEN_REQUEST_TOKEN" "$ACTIONS_ID_TOKEN_REQUEST_URL&audience=sts.amazonaws.com" | jq -r '.value')
-          echo "$IDTOKEN" | cut -d. -f2 | base64 -d 2>/dev/null | jq . || echo "$IDTOKEN" | cut -d. -f2 | tr '_-' '/+' | base64 -d 2>/dev/null | jq .
-
       - name: Configure AWS credentials via OIDC
         uses: aws-actions/configure-aws-credentials@v4
         with:
