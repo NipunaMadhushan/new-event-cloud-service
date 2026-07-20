@@ -1,5 +1,17 @@
 name: Deploy service (blue-green)
 
+# Reusable workflow, called by each service's own CI file after its image is
+# pushed. Deploys the new image to whichever slot ISN'T currently live, waits
+# for it to be Ready, smoke-tests it directly (bypassing the stable Service),
+# and only then flips the stable Service's selector to cut over. The other
+# slot is left running untouched on its previous image — an instant rollback
+# path if the new version misbehaves after cutover.
+#
+# Note: id-token/contents permissions for the OIDC token are declared on the
+# CALLING job (the one with `uses:`), not here — a reusable workflow's own
+# job-level `permissions:` block breaks parsing entirely (confirmed via
+# repeated startup_failure until this was moved to the caller).
+
 on:
   workflow_call:
     inputs:
@@ -20,5 +32,47 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     steps:
-      - name: Echo inputs
-        run: echo "service=${{ inputs.service }} chartPath=${{ inputs.chartPath }} port=${{ inputs.containerPort }} tag=${{ inputs.imageTag }}"
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Update kubeconfig
+        run: aws eks update-kubeconfig --name new-event-cluster --region us-east-1
+
+      - name: Determine the inactive slot
+        id: slot
+        run: |
+          CURRENT=$(kubectl get svc ${{ inputs.service }} -n app -o jsonpath='{.spec.selector.slot}')
+          if [ "$CURRENT" = "blue" ]; then INACTIVE=green; else INACTIVE=blue; fi
+          echo "active=$CURRENT" >> "$GITHUB_OUTPUT"
+          echo "inactive=$INACTIVE" >> "$GITHUB_OUTPUT"
+          echo "Currently active: $CURRENT — deploying to: $INACTIVE"
+
+      - name: Deploy new image to the inactive slot only
+        run: |
+          helm upgrade ${{ inputs.service }} ${{ inputs.chartPath }} -n app --reuse-values \
+            --set slots.${{ steps.slot.outputs.inactive }}.tag=${{ inputs.imageTag }}
+          kubectl rollout status deployment/${{ inputs.service }}-${{ steps.slot.outputs.inactive }} -n app --timeout=180s
+
+      - name: Smoke-test the inactive slot directly (stable Service still points at the old slot)
+        run: |
+          POD=$(kubectl get pods -n app -l app=${{ inputs.service }},slot=${{ steps.slot.outputs.inactive }} -o jsonpath='{.items[0].metadata.name}')
+          kubectl port-forward -n app "pod/$POD" 18080:${{ inputs.containerPort }} &
+          PF_PID=$!
+          sleep 5
+          curl -sf http://localhost:18080/healthz
+          STATUS=$?
+          kill $PF_PID 2>/dev/null || true
+          exit $STATUS
+
+      - name: Cut over — flip the stable Service to the new slot
+        run: |
+          helm upgrade ${{ inputs.service }} ${{ inputs.chartPath }} -n app --reuse-values \
+            --set slots.${{ steps.slot.outputs.inactive }}.tag=${{ inputs.imageTag }} \
+            --set activeSlot=${{ steps.slot.outputs.inactive }}
+          echo "Cut over ${{ inputs.service }} to slot: ${{ steps.slot.outputs.inactive }}"
