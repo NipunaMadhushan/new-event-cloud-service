@@ -50,7 +50,7 @@ jobs:
     uses: ./.github/workflows/deploy-service.yml
     with:
       service: frontend
-      chart-path: helm/frontend
-      container-port: 80
-      image-tag: ${{ github.sha }}
+      chartPath: helm/frontend
+      containerPort: 80
+      imageTag: ${{ github.sha }}
     secrets: inherit

@@ -50,7 +50,7 @@ jobs:
     uses: ./.github/workflows/deploy-service.yml
     with:
       service: program-service
-      chart-path: helm/program-service
-      container-port: 8082
-      image-tag: ${{ github.sha }}
+      chartPath: helm/program-service
+      containerPort: 8082
+      imageTag: ${{ github.sha }}
     secrets: inherit

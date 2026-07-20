@@ -51,7 +51,7 @@ jobs:
     uses: ./.github/workflows/deploy-service.yml
     with:
       service: event-service
-      chart-path: helm/event-service
-      container-port: 8081
-      image-tag: ${{ github.sha }}
+      chartPath: helm/event-service
+      containerPort: 8081
+      imageTag: ${{ github.sha }}
     secrets: inherit

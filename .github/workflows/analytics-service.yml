@@ -50,7 +50,7 @@ jobs:
     uses: ./.github/workflows/deploy-service.yml
     with:
       service: analytics-service
-      chart-path: helm/analytics-service
-      container-port: 8084
-      image-tag: ${{ github.sha }}
+      chartPath: helm/analytics-service
+      containerPort: 8084
+      imageTag: ${{ github.sha }}
     secrets: inherit

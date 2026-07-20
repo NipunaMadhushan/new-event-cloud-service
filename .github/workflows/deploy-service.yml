@@ -13,13 +13,13 @@ on:
       service:
         required: true
         type: string
-      chart-path:
+      chartPath:
         required: true
         type: string
-      container-port:
+      containerPort:
         required: true
         type: number
-      image-tag:
+      imageTag:
         required: true
         type: string
 
@@ -53,14 +53,14 @@ jobs:
 
       - name: Deploy new image to the inactive slot only
         run: |
-          helm upgrade ${{ inputs.service }} ${{ inputs.chart-path }} -n app --reuse-values \
-            --set slots.${{ steps.slot.outputs.inactive }}.tag=${{ inputs.image-tag }}
+          helm upgrade ${{ inputs.service }} ${{ inputs.chartPath }} -n app --reuse-values \
+            --set slots.${{ steps.slot.outputs.inactive }}.tag=${{ inputs.imageTag }}
           kubectl rollout status deployment/${{ inputs.service }}-${{ steps.slot.outputs.inactive }} -n app --timeout=180s
 
       - name: Smoke-test the inactive slot directly (stable Service still points at the old slot)
         run: |
           POD=$(kubectl get pods -n app -l app=${{ inputs.service }},slot=${{ steps.slot.outputs.inactive }} -o jsonpath='{.items[0].metadata.name}')
-          kubectl port-forward -n app "pod/$POD" 18080:${{ inputs.container-port }} &
+          kubectl port-forward -n app "pod/$POD" 18080:${{ inputs.containerPort }} &
           PF_PID=$!
           sleep 5
           curl -sf http://localhost:18080/healthz
@@ -70,7 +70,7 @@ jobs:
 
       - name: Cut over — flip the stable Service to the new slot
         run: |
-          helm upgrade ${{ inputs.service }} ${{ inputs.chart-path }} -n app --reuse-values \
-            --set slots.${{ steps.slot.outputs.inactive }}.tag=${{ inputs.image-tag }} \
+          helm upgrade ${{ inputs.service }} ${{ inputs.chartPath }} -n app --reuse-values \
+            --set slots.${{ steps.slot.outputs.inactive }}.tag=${{ inputs.imageTag }} \
             --set activeSlot=${{ steps.slot.outputs.inactive }}
           echo "Cut over ${{ inputs.service }} to slot: ${{ steps.slot.outputs.inactive }}"
