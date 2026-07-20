@@ -1,0 +1,16 @@
+apiVersion: monitoring.coreos.com/v1
+kind: PodMonitor
+metadata:
+  name: {{ .Chart.Name }}
+  labels:
+    # Required for kube-prometheus-stack's Prometheus CR to pick this up —
+    # its podMonitorSelector matches on this exact label.
+    release: kube-prometheus-stack
+spec:
+  selector:
+    matchLabels:
+      app: {{ .Chart.Name }}
+  podMetricsEndpoints:
+    - port: metrics
+      path: /metrics
+      interval: 30s

@@ -1,6 +1,7 @@
 import ballerina/http;
 import ballerina/log;
 import ballerina/sql;
+import ballerinax/prometheus as _;
 
 configurable int servicePort = 8081;
 
