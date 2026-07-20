@@ -66,6 +66,12 @@ spec:
             - "-CdbPassword=$(DB_PASSWORD)"
             - "-CdbName=$(DB_NAME)"
             - "-CservicePort={{ $.Values.containerPort }}"
+            # See helm/event-service/templates/deployment.yaml for why this points
+            # at the OTel Collector's otlp receiver despite the "jaeger" name.
+            - "-Cballerina.observe.tracingEnabled=true"
+            - "-Cballerina.observe.tracingProvider=jaeger"
+            - "-Cballerinax.jaeger.agentHostname=otel-collector.observability.svc.cluster.local"
+            - "-Cballerinax.jaeger.agentPort=4317"
           readinessProbe:
             httpGet:
               path: /healthz
