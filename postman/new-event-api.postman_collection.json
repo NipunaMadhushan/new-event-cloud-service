@@ -1,0 +1,543 @@
+{
+  "info": {
+    "name": "New Event Cloud Service API",
+    "description": "Exercises every API surface reachable through the ingress (event-service, program-service, registration-service, analytics-service, all proxied via frontend/nginx.conf). Run as a collection top-to-bottom against $INGRESS_HOST — each folder chains IDs from create -> read -> update -> delete via collection variables set in test scripts, so a full run is a real end-to-end smoke test, not just isolated calls.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    { "key": "baseUrl", "value": "http://localhost", "type": "string" },
+    { "key": "eventId", "value": "", "type": "string" },
+    { "key": "programId", "value": "", "type": "string" },
+    { "key": "registrationId", "value": "", "type": "string" }
+  ],
+  "item": [
+    {
+      "name": "Health",
+      "item": [
+        {
+          "name": "Frontend healthz",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/healthz", "host": ["{{baseUrl}}"], "path": ["healthz"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Events",
+      "item": [
+        {
+          "name": "Create event",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/events", "host": ["{{baseUrl}}"], "path": ["api", "events"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Postman Test Event\",\n  \"venue\": \"Test Venue\",\n  \"eventDatetime\": \"2026-12-01T09:00:00Z\",\n  \"ticketPrice\": 25.00,\n  \"capacity\": 100,\n  \"seatsAvailable\": 15\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "var json = pm.response.json();",
+                  "pm.collectionVariables.set('eventId', json.eventId);",
+                  "pm.test('Response has eventId', function () { pm.expect(json.eventId).to.be.a('string'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List events",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/events", "host": ["{{baseUrl}}"], "path": ["api", "events"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Response is an array', function () { pm.expect(pm.response.json()).to.be.an('array'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get event by id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/events/{{eventId}}", "host": ["{{baseUrl}}"], "path": ["api", "events", "{{eventId}}"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update event",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/events/{{eventId}}", "host": ["{{baseUrl}}"], "path": ["api", "events", "{{eventId}}"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Postman Test Event (updated)\",\n  \"venue\": \"Test Venue\",\n  \"eventDatetime\": \"2026-12-01T09:00:00Z\",\n  \"ticketPrice\": 30.00,\n  \"capacity\": 100,\n  \"seatsAvailable\": 15\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Title was updated', function () { pm.expect(pm.response.json().title).to.eql('Postman Test Event (updated)'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reserve seats",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/events/{{eventId}}/reserve", "host": ["{{baseUrl}}"], "path": ["api", "events", "{{eventId}}", "reserve"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ticketCount\": 2\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "pm.test('seatsAvailable decremented', function () { pm.expect(pm.response.json().seatsAvailable).to.eql(13); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Reserve seats - overselling rejected",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/events/{{eventId}}/reserve", "host": ["{{baseUrl}}"], "path": ["api", "events", "{{eventId}}", "reserve"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"ticketCount\": 9999\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 400 (not enough seats)', function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete event",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/events/{{eventId}}", "host": ["{{baseUrl}}"], "path": ["api", "events", "{{eventId}}"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 204', function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Programs",
+      "item": [
+        {
+          "name": "Create event for program (setup)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/events", "host": ["{{baseUrl}}"], "path": ["api", "events"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Postman Program Parent Event\",\n  \"venue\": \"Test Venue\",\n  \"eventDatetime\": \"2026-12-02T09:00:00Z\",\n  \"ticketPrice\": 25.00,\n  \"capacity\": 100,\n  \"seatsAvailable\": 100\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "pm.collectionVariables.set('eventId', pm.response.json().eventId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create program",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/programs", "host": ["{{baseUrl}}"], "path": ["api", "programs"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"{{eventId}}\",\n  \"day\": \"2026-12-02\",\n  \"track\": \"Main Track\",\n  \"session\": \"Opening Keynote\",\n  \"speakerName\": \"Jane Doe\",\n  \"startTime\": \"09:00:00\",\n  \"endTime\": \"10:00:00\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "var json = pm.response.json();",
+                  "pm.collectionVariables.set('programId', json.programId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List programs for event",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/programs?eventId={{eventId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "programs"],
+              "query": [{ "key": "eventId", "value": "{{eventId}}" }]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Response is an array', function () { pm.expect(pm.response.json()).to.be.an('array'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get program by id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/programs/{{programId}}", "host": ["{{baseUrl}}"], "path": ["api", "programs", "{{programId}}"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Update program",
+          "request": {
+            "method": "PUT",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/programs/{{programId}}", "host": ["{{baseUrl}}"], "path": ["api", "programs", "{{programId}}"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"{{eventId}}\",\n  \"day\": \"2026-12-02\",\n  \"track\": \"Main Track\",\n  \"session\": \"Opening Keynote (updated)\",\n  \"speakerName\": \"Jane Doe\",\n  \"startTime\": \"09:00:00\",\n  \"endTime\": \"10:30:00\"\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Session was updated', function () { pm.expect(pm.response.json().session).to.eql('Opening Keynote (updated)'); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete program",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/programs/{{programId}}", "host": ["{{baseUrl}}"], "path": ["api", "programs", "{{programId}}"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 204', function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete parent event (cleanup)",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/events/{{eventId}}", "host": ["{{baseUrl}}"], "path": ["api", "events", "{{eventId}}"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 204', function () { pm.response.to.have.status(204); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Registrations",
+      "item": [
+        {
+          "name": "Create event for registration (setup)",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/events", "host": ["{{baseUrl}}"], "path": ["api", "events"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"title\": \"Postman Registration Parent Event\",\n  \"venue\": \"Test Venue\",\n  \"eventDatetime\": \"2026-12-03T09:00:00Z\",\n  \"ticketPrice\": 15.00,\n  \"capacity\": 50,\n  \"seatsAvailable\": 50\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "pm.collectionVariables.set('eventId', pm.response.json().eventId);"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create registration",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/registrations", "host": ["{{baseUrl}}"], "path": ["api", "registrations"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"{{eventId}}\",\n  \"name\": \"Postman Tester\",\n  \"email\": \"postman-test@example.com\",\n  \"ticketCount\": 2\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 201', function () { pm.response.to.have.status(201); });",
+                  "var json = pm.response.json();",
+                  "pm.collectionVariables.set('registrationId', json.registrationId);",
+                  "pm.test('ticketCount matches', function () { pm.expect(json.ticketCount).to.eql(2); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Create registration - not enough seats rejected",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/registrations", "host": ["{{baseUrl}}"], "path": ["api", "registrations"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"eventId\": \"{{eventId}}\",\n  \"name\": \"Postman Tester 2\",\n  \"email\": \"postman-test-2@example.com\",\n  \"ticketCount\": 9999\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 400 (not enough seats)', function () { pm.response.to.have.status(400); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "List registrations for event",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": {
+              "raw": "{{baseUrl}}/api/registrations?eventId={{eventId}}",
+              "host": ["{{baseUrl}}"],
+              "path": ["api", "registrations"],
+              "query": [{ "key": "eventId", "value": "{{eventId}}" }]
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });",
+                  "pm.test('Contains our registration', function () {",
+                  "  var ids = pm.response.json().map(function (r) { return r.registrationId; });",
+                  "  pm.expect(ids).to.include(pm.collectionVariables.get('registrationId'));",
+                  "});"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Get registration by id",
+          "request": {
+            "method": "GET",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/registrations/{{registrationId}}", "host": ["{{baseUrl}}"], "path": ["api", "registrations", "{{registrationId}}"] }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 200', function () { pm.response.to.have.status(200); });"
+                ]
+              }
+            }
+          ]
+        },
+        {
+          "name": "Delete parent event - blocked while registration exists",
+          "request": {
+            "method": "DELETE",
+            "header": [],
+            "url": { "raw": "{{baseUrl}}/api/events/{{eventId}}", "host": ["{{baseUrl}}"], "path": ["api", "events", "{{eventId}}"] },
+            "description": "There's no DELETE /registrations endpoint, so this test data is intentionally left in place rather than cleaned up -- this request instead documents the real, correct behavior: deleting an event that still has a registration attached is rejected (409), not a raw 500."
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 409 (blocked by existing registration)', function () { pm.response.to.have.status(409); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    },
+    {
+      "name": "Analytics",
+      "item": [
+        {
+          "name": "Collect analytics batch",
+          "request": {
+            "method": "POST",
+            "header": [{ "key": "Content-Type", "value": "application/json" }],
+            "url": { "raw": "{{baseUrl}}/api/analytics/collect", "host": ["{{baseUrl}}"], "path": ["api", "analytics", "collect"] },
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"events\": [\n    {\n      \"sessionId\": \"postman-test-session\",\n      \"eventType\": \"visit\",\n      \"timestamp\": \"2026-01-01T00:00:00.000Z\",\n      \"page\": \"/\",\n      \"payload\": { \"referrer\": \"postman\" }\n    }\n  ]\n}",
+              "options": { "raw": { "language": "json" } }
+            }
+          },
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "type": "text/javascript",
+                "exec": [
+                  "pm.test('Status is 202', function () { pm.response.to.have.status(202); });"
+                ]
+              }
+            }
+          ]
+        }
+      ]
+    }
+  ]
+}

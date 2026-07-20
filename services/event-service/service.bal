@@ -82,9 +82,12 @@ service /events on eventListener {
         return result;
     }
 
-    resource function delete [string eventId]() returns http:NoContent|http:NotFound|http:InternalServerError {
+    resource function delete [string eventId]() returns http:NoContent|http:NotFound|http:Conflict|http:InternalServerError {
         sql:ExecutionResult|sql:Error result = dbClient->execute(`DELETE FROM events WHERE event_id = ${eventId}::uuid`);
         if result is error {
+            if result.message().includes("foreign key") {
+                return <http:Conflict>{body: {message: "Cannot delete event with existing programs or registrations"}};
+            }
             log:printError("Failed to delete event", result);
             return <http:InternalServerError>{body: {message: "Failed to delete event"}};
         }
