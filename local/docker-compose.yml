@@ -76,6 +76,8 @@ services:
     image: clickhouse/clickhouse-server:25.7
     container_name: clickhouse
     restart: unless-stopped
+    environment:
+      CLICKHOUSE_PASSWORD: clickhouse_dev_pw
     ports:
       - "8123:8123"
     volumes:
@@ -97,7 +99,7 @@ services:
       - "-CclickhouseHost=clickhouse"
       - "-CclickhousePort=8123"
       - "-CclickhouseUser=default"
-      - "-CclickhousePassword="
+      - "-CclickhousePassword=clickhouse_dev_pw"
       - "-CservicePort=8084"
     ports:
       - "8084:8084"

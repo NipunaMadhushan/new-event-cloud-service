@@ -12,3 +12,8 @@ Config.toml
 
 # local tool caches
 .kuberlr/
+
+# Lambda build artifacts (rebuilt from source via npm install --production + zip
+# per DEPLOYMENT_GUIDE.md §7 — never belong in version control)
+lambda/*/node_modules/
+lambda/*/function.zip
