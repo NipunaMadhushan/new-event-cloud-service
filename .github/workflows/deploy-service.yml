@@ -19,6 +19,21 @@ on:
 jobs:
   deploy:
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
     steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Update kubeconfig
+        run: aws eks update-kubeconfig --name new-event-cluster --region us-east-1
+
       - name: Echo inputs
         run: echo "service=${{ inputs.service }} chartPath=${{ inputs.chartPath }} port=${{ inputs.containerPort }} tag=${{ inputs.imageTag }}"
