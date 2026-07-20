@@ -33,6 +33,8 @@ spec:
           image: "{{ $.Values.image.repository }}:{{ $cfg.tag }}"
           ports:
             - containerPort: {{ $.Values.containerPort }}
+            - name: metrics
+              containerPort: 9797
           env:
             - name: DB_HOST
               valueFrom:

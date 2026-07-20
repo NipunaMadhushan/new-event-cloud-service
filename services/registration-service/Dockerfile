@@ -8,5 +8,7 @@ RUN bal build
 FROM eclipse-temurin:21-jre-alpine
 WORKDIR /app
 COPY --from=build /build/target/bin/registration_service.jar app.jar
-EXPOSE 8083
+COPY observability.toml observability.toml
+ENV BAL_CONFIG_FILES=/app/observability.toml
+EXPOSE 8083 9797
 ENTRYPOINT ["java", "-jar", "app.jar"]
