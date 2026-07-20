@@ -25,8 +25,16 @@ auth:
   existingSecret: clickhouse-credentials
   existingSecretKey: password
 
+# NodePort, not ClusterIP: the clickhouse-quicksight-export Lambda lives
+# outside the pod network (it's a VPC ENI, not a K8s pod), so it can't reach
+# CoreDNS or ClusterIP routing — both only work for traffic that passes
+# through a node's kube-proxy rules. NodePort opens the port on every node's
+# real (VPC-routable) IP instead, which the Lambda can reach directly since
+# it shares the cluster's security group. See DEPLOYMENT_GUIDE.md §7.2.
 service:
-  type: ClusterIP
+  type: NodePort
+  nodePorts:
+    http: "30123"
 
 persistence:
   enabled: true

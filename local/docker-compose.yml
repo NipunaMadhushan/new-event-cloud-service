@@ -69,14 +69,49 @@ services:
     ports:
       - "8083:8083"
 
+  # Official image, not bitnamilegacy — that swap is only needed for the EKS
+  # deployment (see helm/clickhouse/values.yaml); locally the upstream image's
+  # .sql init-script support just works.
+  clickhouse:
+    image: clickhouse/clickhouse-server:25.7
+    container_name: clickhouse
+    restart: unless-stopped
+    ports:
+      - "8123:8123"
+    volumes:
+      - chdata:/var/lib/clickhouse
+      - ./clickhouse-init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8123/ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  analytics-service:
+    build: ../services/analytics-service
+    container_name: analytics-service
+    depends_on:
+      clickhouse:
+        condition: service_healthy
+    command:
+      - "-CclickhouseHost=clickhouse"
+      - "-CclickhousePort=8123"
+      - "-CclickhouseUser=default"
+      - "-CclickhousePassword="
+      - "-CservicePort=8084"
+    ports:
+      - "8084:8084"
+
   frontend:
     build: ../frontend
     container_name: frontend
     depends_on:
       - event-service
       - registration-service
+      - analytics-service
     ports:
       - "18080:80"
 
 volumes:
   pgdata:
+  chdata:

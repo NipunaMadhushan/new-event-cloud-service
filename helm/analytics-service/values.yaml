@@ -1,0 +1,44 @@
+# See helm/event-service/values.yaml for the blue/green design notes — same
+# pattern here. No RDS — this service only talks to ClickHouse, over its
+# in-cluster Service DNS (this pod, unlike the export Lambda, is a real K8s
+# pod so it resolves clickhouse.data.svc.cluster.local via CoreDNS directly;
+# no NodePort workaround needed here — see DEPLOYMENT_GUIDE.md §7.2/§7.3).
+
+image:
+  repository: ghcr.io/nipunamadhushan/analytics-service
+
+activeSlot: blue
+
+slots:
+  blue:
+    tag: latest
+    replicas: 1
+  green:
+    tag: latest
+    replicas: 1
+
+containerPort: 8084
+servicePort: 8084
+
+clickhouse:
+  host: clickhouse.data.svc.cluster.local
+  port: 8123
+  user: default
+  # clickhouse-credentials lives in the "data" namespace (helm/clickhouse) —
+  # K8s Secrets are namespace-scoped, so it must be copied into this chart's
+  # namespace ("app") before install. See DEPLOYMENT_GUIDE.md §7.3.
+  secretName: clickhouse-credentials
+  secretKey: password
+
+resources:
+  requests:
+    cpu: 50m
+    memory: 96Mi
+  limits:
+    cpu: 200m
+    memory: 192Mi
+
+autoscaling:
+  minReplicas: 1
+  maxReplicas: 4
+  targetCPUUtilizationPercentage: 70
