@@ -1,7 +1,6 @@
 import ballerina/http;
 import ballerina/lang.value;
 import ballerina/log;
-import ballerinax/jaeger as _;
 
 configurable int servicePort = 8084;
 

@@ -66,15 +66,6 @@ spec:
             - "-CdbPassword=$(DB_PASSWORD)"
             - "-CdbName=$(DB_NAME)"
             - "-CservicePort={{ $.Values.containerPort }}"
-            # Ballerina's "jaeger" tracing provider actually exports via OTLP gRPC
-            # under the hood, so this points straight at the OTel Collector's
-            # existing otlp receiver (port 4317) — no separate Jaeger receiver
-            # needed. See DEPLOYMENT_GUIDE.md §5 for why traces silently never
-            # worked before this (observabilityIncluded=true is build-time only).
-            - "-Cballerina.observe.tracingEnabled=true"
-            - "-Cballerina.observe.tracingProvider=jaeger"
-            - "-Cballerinax.jaeger.agentHostname=otel-collector.observability.svc.cluster.local"
-            - "-Cballerinax.jaeger.agentPort=4317"
           readinessProbe:
             httpGet:
               path: /healthz
