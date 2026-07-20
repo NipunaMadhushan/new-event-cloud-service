@@ -45,3 +45,13 @@ jobs:
             ghcr.io/${{ env.OWNER_LC }}/${{ env.IMAGE_NAME }}:latest
           cache-from: type=gha,scope=${{ env.IMAGE_NAME }}
           cache-to: type=gha,mode=max,scope=${{ env.IMAGE_NAME }}
+
+  deploy:
+    needs: build-and-push
+    uses: ./.github/workflows/deploy-service.yml
+    with:
+      service: event-service
+      chart-path: helm/event-service
+      container-port: 8081
+      image-tag: ${{ github.sha }}
+    secrets: inherit
