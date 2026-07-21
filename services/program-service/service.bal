@@ -67,6 +67,7 @@ service /programs on programListener {
             }
             return <http:InternalServerError>{body: {message: "Failed to create program"}};
         }
+        log:printInfo(string `Program created: ${result.programId} (${result.session})`);
         return result;
     }
 
@@ -87,6 +88,7 @@ service /programs on programListener {
             }
             return <http:InternalServerError>{body: {message: "Failed to update program"}};
         }
+        log:printInfo(string `Program updated: ${programId}`);
         return result;
     }
 
@@ -99,6 +101,7 @@ service /programs on programListener {
         if result.affectedRowCount == 0 {
             return <http:NotFound>{body: {message: "Program not found"}};
         }
+        log:printInfo(string `Program deleted: ${programId}`);
         return http:NO_CONTENT;
     }
 }

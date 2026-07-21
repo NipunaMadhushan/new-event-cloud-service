@@ -32,7 +32,9 @@ function notifySeatsLow(string eventId, int seatsAvailable) {
     http:Response|http:ClientError result = notifierClient->post("/", {eventId, seatsAvailable});
     if result is http:ClientError {
         log:printError("Failed to notify seat-threshold Lambda", result);
+        return;
     }
+    log:printInfo(string `Seat-threshold notification sent for event ${eventId}: ${seatsAvailable} remaining`);
 }
 
 service / on registrationListener {
@@ -111,6 +113,7 @@ service /registrations on registrationListener {
             log:printError("Failed to save registration after reserving seats", saved);
             return <http:InternalServerError>{body: {message: "Failed to save registration"}};
         }
+        log:printInfo(string `Registration created: ${saved.registrationId} for event ${input.eventId} (${input.ticketCount} ticket(s))`);
 
         if reserveResult.belowThreshold {
             notifySeatsLow(input.eventId, reserveResult.seatsAvailable);

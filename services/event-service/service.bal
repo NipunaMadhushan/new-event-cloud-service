@@ -64,6 +64,7 @@ service /events on eventListener {
             log:printError("Failed to create event", result);
             return <http:InternalServerError>{body: {message: "Failed to create event"}};
         }
+        log:printInfo(string `Event created: ${result.eventId} (${result.title})`);
         return result;
     }
 
@@ -81,6 +82,7 @@ service /events on eventListener {
             log:printError("Failed to update event", result);
             return <http:InternalServerError>{body: {message: "Failed to update event"}};
         }
+        log:printInfo(string `Event updated: ${eventId}`);
         return result;
     }
 
@@ -96,6 +98,7 @@ service /events on eventListener {
         if result.affectedRowCount == 0 {
             return <http:NotFound>{body: {message: "Event not found"}};
         }
+        log:printInfo(string `Event deleted: ${eventId}`);
         return http:NO_CONTENT;
     }
 
@@ -125,6 +128,8 @@ service /events on eventListener {
             return <http:InternalServerError>{body: {message: "Failed to reserve seats"}};
         }
 
-        return {eventId, seatsAvailable: updated.seatsAvailable, belowThreshold: updated.seatsAvailable < 10};
+        boolean belowThreshold = updated.seatsAvailable < 10;
+        log:printInfo(string `Reserved ${req.ticketCount} seat(s) for event ${eventId}: ${updated.seatsAvailable} remaining${belowThreshold ? " (below threshold)" : ""}`);
+        return {eventId, seatsAvailable: updated.seatsAvailable, belowThreshold};
     }
 }
