@@ -29,6 +29,16 @@ prometheus:
             requests:
               storage: 5Gi
 
+# Disabled: this chart's default CoreDNS-scraping shim creates a Service in
+# kube-system (outside this project's own namespaces), which the CI/CD
+# automation's deliberately narrow IAM role has no access to and shouldn't
+# be granted for a project that doesn't otherwise touch kube-system at all.
+# Losing CoreDNS-specific metrics is a minor, accepted trade-off — general
+# cluster DNS health isn't something this coursework's observability story
+# relies on.
+coreDns:
+  enabled: false
+
 alertmanager:
   alertmanagerSpec:
     resources: {}
@@ -40,6 +50,16 @@ grafana:
     existingSecret: grafana-admin-credentials
     userKey: admin-user
     passwordKey: admin-password
+
+  # Without this, Grafana's /var/lib/grafana data dir (its SQLite DB, holding
+  # every manually-created dashboard, starred query, etc.) is an emptyDir —
+  # wiped on every pod restart/reschedule/Helm upgrade. The built-in
+  # sidecar-provisioned dashboards (ConfigMap-based) survive either way; this
+  # is specifically for anything built by hand through the UI.
+  persistence:
+    enabled: true
+    storageClassName: gp3
+    size: 1Gi
 
   plugins:
     - grafana-clickhouse-datasource
