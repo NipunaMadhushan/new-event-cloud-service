@@ -29,14 +29,28 @@ prometheus:
             requests:
               storage: 5Gi
 
-# Disabled: this chart's default CoreDNS-scraping shim creates a Service in
-# kube-system (outside this project's own namespaces), which the CI/CD
-# automation's deliberately narrow IAM role has no access to and shouldn't
-# be granted for a project that doesn't otherwise touch kube-system at all.
-# Losing CoreDNS-specific metrics is a minor, accepted trade-off — general
-# cluster DNS health isn't something this coursework's observability story
-# relies on.
+# Disabled: these are the chart's default control-plane component scrape
+# shims (CoreDNS, controller-manager, scheduler, etcd, kube-proxy). Each one
+# creates its own Service in kube-system (outside this project's own
+# namespaces), which the CI/CD automation's deliberately narrow IAM role has
+# no access to and shouldn't be granted just for this. They're also
+# non-functional on EKS regardless of permissions: the control plane
+# components they target are fully AWS-managed and don't run as
+# customer-visible pods, so there'd be nothing to scrape even if the
+# Services were created. This is the standard fix for deploying
+# kube-prometheus-stack on any managed Kubernetes offering (EKS/GKE/AKS).
+# kubeApiServer is left enabled — it only points at the pre-existing,
+# always-present `kubernetes` Service in the default namespace rather than
+# creating a new kube-system object, so it doesn't hit this issue.
 coreDns:
+  enabled: false
+kubeControllerManager:
+  enabled: false
+kubeEtcd:
+  enabled: false
+kubeScheduler:
+  enabled: false
+kubeProxy:
   enabled: false
 
 alertmanager:
