@@ -1,0 +1,75 @@
+name: observability CI
+
+# Unlike the 5 app services, these are singleton releases (Prometheus/Grafana/
+# Alertmanager, OTel Collector, Fluent Bit) -- no blue-green slot to deploy to
+# first and smoke-test. A helm upgrade here applies directly to the one live
+# release. Chart-render validation runs first as a cheap pre-flight check
+# (catches an obviously broken values file before touching the cluster), but
+# there's no automatic rollback if a change is bad in a way validation can't
+# catch -- see OPERATIONS_GUIDE.md for how to diagnose/recover manually.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "helm/observability/**"
+      - ".github/workflows/observability.yml"
+  workflow_dispatch: {}
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
+          aws-region: us-east-1
+
+      - name: Update kubeconfig
+        run: aws eks update-kubeconfig --name new-event-cluster --region us-east-1
+
+      - name: Add upstream Helm repos
+        run: |
+          helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+          helm repo add open-telemetry https://open-telemetry.github.io/opentelemetry-helm-charts
+          helm repo add fluent https://fluent.github.io/helm-charts
+          helm repo update
+
+      - name: Validate charts render before touching the cluster
+        run: |
+          helm template kube-prometheus-stack prometheus-community/kube-prometheus-stack \
+            -f helm/observability/prometheus-values.yaml --namespace observability > /dev/null
+          helm template otel-collector open-telemetry/opentelemetry-collector \
+            -f helm/observability/otel-collector-values.yaml --namespace observability > /dev/null
+          helm template fluent-bit fluent/fluent-bit \
+            -f helm/observability/fluent-bit-values.yaml --namespace observability > /dev/null
+
+      # --reuse-values carries forward anything set outside these files at
+      # install time (e.g. the ClickHouse datasource password, --set-string'd
+      # in per DEPLOYMENT_GUIDE.md §5.4, deliberately never committed here).
+      # --wait makes the step fail if the upgrade doesn't actually reach a
+      # healthy state, instead of reporting false success.
+      - name: Upgrade kube-prometheus-stack (Prometheus + Grafana + Alertmanager)
+        run: |
+          helm upgrade kube-prometheus-stack prometheus-community/kube-prometheus-stack \
+            --namespace observability -f helm/observability/prometheus-values.yaml \
+            --reuse-values --wait --timeout 5m
+
+      - name: Upgrade OTel Collector
+        run: |
+          helm upgrade otel-collector open-telemetry/opentelemetry-collector \
+            --namespace observability -f helm/observability/otel-collector-values.yaml \
+            --reuse-values --wait --timeout 5m
+
+      - name: Upgrade Fluent Bit
+        run: |
+          helm upgrade fluent-bit fluent/fluent-bit \
+            --namespace observability -f helm/observability/fluent-bit-values.yaml \
+            --reuse-values --wait --timeout 5m
