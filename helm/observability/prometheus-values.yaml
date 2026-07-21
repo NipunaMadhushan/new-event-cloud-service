@@ -75,6 +75,17 @@ grafana:
     storageClassName: gp3
     size: 1Gi
 
+  # The PVC above is ReadWriteOnce (a single gp3/EBS volume), so it can only be
+  # attached to one node at a time. The chart's default RollingUpdate strategy
+  # schedules the new pod before killing the old one — if the new pod lands on
+  # a different node, Kubernetes can't attach the volume there while the old
+  # pod still holds it, and the rollout hangs forever ("Multi-Attach error").
+  # Recreate kills the old pod first, freeing the volume before the new one
+  # starts. Brief Grafana downtime during upgrades is an acceptable trade-off
+  # for a single-replica dashboard UI.
+  deploymentStrategy:
+    type: Recreate
+
   plugins:
     - grafana-clickhouse-datasource
 
