@@ -1,4 +1,4 @@
-name: Deploy service (blue-green)
+name: Deploy Service (blue-green)
 
 # Reusable workflow, called by each service's own CI file after its image is
 # pushed. Deploys the new image to whichever slot ISN'T currently live, waits

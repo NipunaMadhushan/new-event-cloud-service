@@ -1,4 +1,4 @@
-name: registration-service CI
+name: Update Registration Service
 
 on:
   push:

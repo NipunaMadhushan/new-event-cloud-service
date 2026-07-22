@@ -1,4 +1,4 @@
-name: event-service CI
+name: Update Event Service
 
 on:
   push:

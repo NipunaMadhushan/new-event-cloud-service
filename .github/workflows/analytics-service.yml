@@ -1,4 +1,4 @@
-name: analytics-service CI
+name: Update Analytics Service
 
 on:
   push:

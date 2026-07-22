@@ -1,4 +1,4 @@
-name: program-service CI
+name: Update Program Service
 
 on:
   push:

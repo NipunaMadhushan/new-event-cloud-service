@@ -1,4 +1,4 @@
-name: observability CI
+name: Observability Helm Charts Update
 
 # Unlike the 5 app services, these are singleton releases (Prometheus/Grafana/
 # Alertmanager, OTel Collector, Fluent Bit) -- no blue-green slot to deploy to
