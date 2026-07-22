@@ -94,4 +94,24 @@ config:
         receivers: [otlp]
         processors: [memory_limiter, batch]
         exporters: [clickhouse]
-      metrics: null
+      # A real, valid, but inert pipeline — deliberately NOT `null`, omitted,
+      # or `{}`. This chart's default values.yaml defines a full metrics
+      # pipeline; the original intent here was to delete it with `null`
+      # since metrics stay on Prometheus (see file header), not the OTel
+      # Collector. But Helm's coalesce behavior for explicit null against
+      # chart defaults is inconsistent across merge paths (worse under
+      # --reuse-values, which re-merges the previously stored config on top
+      # again) — depending on merge order it can leave a literal nil entry
+      # in the merged pipelines map, which crashes this chart's
+      # rewriteDeprecatedComponentNames template helper ("index of untyped
+      # nil"). Switching to `{}` avoids that crash but trades it for a
+      # different one: the collector's own config validation rejects an
+      # empty pipeline outright ("must have at least one receiver"). A
+      # concrete pipeline with a real receiver/processor/exporter is never
+      # nil (fixes the Helm bug) and is always valid config (fixes the
+      # collector startup failure) — it just never receives any data, since
+      # nothing in this project emits metrics via OTLP.
+      metrics:
+        receivers: [otlp]
+        processors: [memory_limiter, batch]
+        exporters: [debug]

@@ -20,20 +20,20 @@ jobs:
   deploy:
     runs-on: ubuntu-latest
     permissions:
-      id-token: write
       contents: read
     steps:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Configure AWS credentials via OIDC
+      - name: Configure AWS credentials
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
-          aws-region: us-east-1
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Update kubeconfig
-        run: aws eks update-kubeconfig --name new-event-cluster --region us-east-1
+        run: aws eks update-kubeconfig --name new-event-cluster --region ${{ secrets.AWS_REGION }}
 
       - name: Add upstream Helm repos
         run: |

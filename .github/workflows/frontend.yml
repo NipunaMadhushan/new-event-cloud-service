@@ -49,7 +49,6 @@ jobs:
     needs: build-and-push
     uses: ./.github/workflows/deploy-service.yml
     permissions:
-      id-token: write
       contents: read
     with:
       service: frontend
