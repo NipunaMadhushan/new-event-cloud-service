@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "services/analytics-service/**"
+      - "helm/analytics-service/**"
       - ".github/workflows/analytics-service.yml"
   workflow_dispatch: {}
 

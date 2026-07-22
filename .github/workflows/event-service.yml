@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "services/event-service/**"
+      - "helm/event-service/**"
       - ".github/workflows/event-service.yml"
   workflow_dispatch: {}
 

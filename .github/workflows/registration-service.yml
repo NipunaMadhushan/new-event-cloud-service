@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "services/registration-service/**"
+      - "helm/registration-service/**"
       - ".github/workflows/registration-service.yml"
   workflow_dispatch: {}
 

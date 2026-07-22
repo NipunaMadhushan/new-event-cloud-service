@@ -5,6 +5,7 @@ on:
     branches: [main]
     paths:
       - "frontend/**"
+      - "helm/frontend/**"
       - ".github/workflows/frontend.yml"
   workflow_dispatch: {}
 
