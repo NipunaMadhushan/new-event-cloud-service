@@ -36,6 +36,15 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
+      # Docker tag purely for human-readable reference in the GHCR package
+      # list — the cluster deploy below still uses the commit SHA tag, which
+      # stays the source of truth for rollbacks (see DEPLOYMENT_GUIDE.md §9).
+      - name: Read package version from Ballerina.toml
+        id: version
+        run: |
+          VERSION=$(grep '^version = ' services/event-service/Ballerina.toml | sed -E 's/version = "(.*)"/\1/')
+          echo "version=$VERSION" >> "$GITHUB_OUTPUT"
+
       - name: Build and push
         uses: docker/build-push-action@v6
         with:
@@ -43,6 +52,7 @@ jobs:
           push: true
           tags: |
             ghcr.io/${{ env.OWNER_LC }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+            ghcr.io/${{ env.OWNER_LC }}/${{ env.IMAGE_NAME }}:${{ steps.version.outputs.version }}
             ghcr.io/${{ env.OWNER_LC }}/${{ env.IMAGE_NAME }}:latest
           cache-from: type=gha,scope=${{ env.IMAGE_NAME }}
           cache-to: type=gha,mode=max,scope=${{ env.IMAGE_NAME }}
@@ -59,3 +69,42 @@ jobs:
       containerPort: 8081
       imageTag: ${{ github.sha }}
     secrets: inherit
+
+  bump-version:
+    needs: build-and-push
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Compute next patch version
+        id: bump
+        run: |
+          CURRENT=$(grep '^version = ' services/event-service/Ballerina.toml | sed -E 's/version = "(.*)"/\1/')
+          IFS='.' read -r MAJOR MINOR PATCH <<< "$CURRENT"
+          NEXT="$MAJOR.$MINOR.$((PATCH + 1))"
+          echo "current=$CURRENT" >> "$GITHUB_OUTPUT"
+          echo "next=$NEXT" >> "$GITHUB_OUTPUT"
+
+      - name: Bump version in Ballerina.toml
+        run: |
+          sed -i "s/^version = \"${{ steps.bump.outputs.current }}\"/version = \"${{ steps.bump.outputs.next }}\"/" services/event-service/Ballerina.toml
+
+      # Left for manual review/merge on purpose — merging this PR triggers a
+      # fresh build+deploy of event-service (Ballerina.toml is in this
+      # workflow's path filter), tagged with the newly bumped version.
+      - name: Open PR to bump the version
+        uses: peter-evans/create-pull-request@v6
+        with:
+          commit-message: "chore(event-service): bump version to ${{ steps.bump.outputs.next }}"
+          branch: bump-event-service-version
+          title: "chore(event-service): bump version ${{ steps.bump.outputs.current }} -> ${{ steps.bump.outputs.next }}"
+          body: |
+            Automated patch version bump following a successful build of
+            `event-service:${{ steps.bump.outputs.current }}` (commit ${{ github.sha }}).
+
+            Merging this will trigger a new build+deploy of event-service tagged `${{ steps.bump.outputs.next }}`.
+          base: main
