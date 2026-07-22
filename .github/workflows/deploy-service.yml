@@ -7,10 +7,10 @@ name: Deploy service (blue-green)
 # slot is left running untouched on its previous image — an instant rollback
 # path if the new version misbehaves after cutover.
 #
-# AWS auth uses a static IAM user access key (AWS_ACCESS_KEY / AWS_SECRET_ACCESS_KEY /
-# AWS_REGION GitHub secrets), not OIDC — this account's IAM is locked down (no
-# iam:CreateRole/CreateUser/CreateAccessKey from CI), so the access key was
-# created once manually via the AWS Console and stored as a repo secret.
+# Note: id-token/contents permissions for the OIDC token are declared on the
+# CALLING job (the one with `uses:`), not here — a reusable workflow's own
+# job-level `permissions:` block breaks parsing entirely (confirmed via
+# repeated startup_failure until this was moved to the caller).
 
 on:
   workflow_call:
@@ -35,11 +35,10 @@ jobs:
       - name: Checkout
         uses: actions/checkout@v4
 
-      - name: Configure AWS credentials
+      - name: Configure AWS credentials via OIDC
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY }}
-          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          role-to-assume: ${{ secrets.AWS_ROLE_ARN }}
           aws-region: ${{ secrets.AWS_REGION }}
 
       - name: Update kubeconfig
