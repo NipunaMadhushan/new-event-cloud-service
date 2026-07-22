@@ -50,16 +50,24 @@ jobs:
           helm template fluent-bit fluent/fluent-bit \
             -f helm/observability/fluent-bit-values.yaml --namespace observability > /dev/null
 
-      # --reuse-values carries forward anything set outside these files at
-      # install time (e.g. the ClickHouse datasource password, --set-string'd
-      # in per DEPLOYMENT_GUIDE.md §5.4, deliberately never committed here).
+      # The ClickHouse datasource password is NOT reliably carried forward by
+      # --reuse-values: prometheus-values.yaml still contains the literal
+      # placeholder "REPLACED_VIA_HELM_SET_AT_INSTALL_TIME" for this field,
+      # and an explicit -f values file always takes precedence over
+      # --reuse-values' stored baseline for the same key — so every upgrade
+      # that didn't also re-pass --set-string here was silently resetting
+      # Grafana's ClickHouse datasource back to that placeholder password
+      # (confirmed: this broke the datasource in production). Fetch the real
+      # password fresh from the Secret every run instead of relying on reuse.
       # --wait makes the step fail if the upgrade doesn't actually reach a
       # healthy state, instead of reporting false success.
       - name: Upgrade kube-prometheus-stack (Prometheus + Grafana + Alertmanager)
         run: |
+          CH_PASSWORD=$(kubectl get secret clickhouse-credentials -n data -o jsonpath='{.data.password}' | base64 -d)
           helm upgrade kube-prometheus-stack prometheus-community/kube-prometheus-stack \
             --namespace observability -f helm/observability/prometheus-values.yaml \
-            --reuse-values --wait --timeout 5m
+            --reuse-values --wait --timeout 5m \
+            --set-string "grafana.additionalDataSources[0].secureJsonData.password=$CH_PASSWORD"
 
       - name: Upgrade OTel Collector
         run: |
