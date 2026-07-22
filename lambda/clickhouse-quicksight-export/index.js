@@ -10,12 +10,19 @@ const S3_BUCKET = process.env.S3_BUCKET;
 // Daily rollup, not a raw dump — re-running this within the same day just
 // overwrites that day's partition with an up-to-date count, so the 15-minute
 // schedule is safe to re-run/retry without producing duplicate rows in Athena.
+// count() returns UInt64, which ClickHouse's JSONEachRow format always quotes
+// as a JSON string (output_format_json_quote_64bit_integers) to avoid
+// precision loss in JS-based JSON parsers. That silently turned event_count
+// into a STRING column all the way through Glue/Athena/QuickSight, so every
+// QuickSight visual defaulted to counting rows instead of summing the real
+// value — every chart showed uniform small numbers with no relation to
+// actual event volume. Casting down to a 32-bit int avoids the quoting.
 const QUERY = `
   SELECT
     toDate(event_timestamp) AS event_date,
     event_type,
     page,
-    count() AS event_count
+    toInt32(count()) AS event_count
   FROM web_events
   WHERE event_timestamp >= now() - INTERVAL 1 DAY
   GROUP BY event_date, event_type, page
