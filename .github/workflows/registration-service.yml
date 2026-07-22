@@ -6,6 +6,7 @@ on:
     paths:
       - "services/registration-service/**"
       - "helm/registration-service/**"
+      - "!services/registration-service/Ballerina.toml"
   workflow_dispatch: {}
 
 env:
@@ -91,9 +92,11 @@ jobs:
         run: |
           sed -i "s/^version = \"${{ steps.bump.outputs.current }}\"/version = \"${{ steps.bump.outputs.next }}\"/" services/registration-service/Ballerina.toml
 
-      # Left for manual review/merge on purpose — merging this PR triggers a
-      # fresh build+deploy of registration-service (Ballerina.toml is in this
-      # workflow's path filter), tagged with the newly bumped version.
+      # Left for manual review/merge on purpose. Ballerina.toml is excluded
+      # from this workflow's path filter (see the `on.push.paths` block
+      # above), so merging this PR does NOT retrigger a build+deploy — the
+      # bumped version just takes effect starting from the next real
+      # code/chart change.
       - name: Open PR to bump the version
         uses: peter-evans/create-pull-request@v6
         with:
@@ -104,5 +107,6 @@ jobs:
             Automated patch version bump following a successful build of
             `registration-service:${{ steps.bump.outputs.current }}` (commit ${{ github.sha }}).
 
-            Merging this will trigger a new build+deploy of registration-service tagged `${{ steps.bump.outputs.next }}`.
+            Merging this will NOT trigger a build/deploy (Ballerina.toml is excluded from this
+            workflow's path filter) — the bumped version applies starting from the next real change.
           base: main
