@@ -1,4 +1,4 @@
-name: Update Program Service
+name: Update Program API Service
 
 on:
   push:

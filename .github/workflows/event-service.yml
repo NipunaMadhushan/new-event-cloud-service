@@ -1,4 +1,4 @@
-name: Update Event Service
+name: Update Event API Service
 
 on:
   push:

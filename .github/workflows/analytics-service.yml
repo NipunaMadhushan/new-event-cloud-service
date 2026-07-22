@@ -1,4 +1,4 @@
-name: Update Analytics Service
+name: Update Analytics API Service
 
 on:
   push:

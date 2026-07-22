@@ -1,4 +1,4 @@
-name: Update Registration Service
+name: Update Registration API Service
 
 on:
   push:
