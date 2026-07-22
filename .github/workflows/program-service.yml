@@ -6,7 +6,6 @@ on:
     paths:
       - "services/program-service/**"
       - "helm/program-service/**"
-      - ".github/workflows/program-service.yml"
   workflow_dispatch: {}
 
 env:
@@ -69,7 +68,7 @@ jobs:
       imageTag: ${{ github.sha }}
     secrets: inherit
 
-  bump-version:
+  update-version:
     needs: build-and-push
     runs-on: ubuntu-latest
     permissions:
@@ -98,9 +97,9 @@ jobs:
       - name: Open PR to bump the version
         uses: peter-evans/create-pull-request@v6
         with:
-          commit-message: "chore(program-service): bump version to ${{ steps.bump.outputs.next }}"
+          commit-message: "Update program API service version to ${{ steps.bump.outputs.next }}"
           branch: bump-program-service-version
-          title: "chore(program-service): bump version ${{ steps.bump.outputs.current }} -> ${{ steps.bump.outputs.next }}"
+          title: "Update program API service version ${{ steps.bump.outputs.current }} -> ${{ steps.bump.outputs.next }}"
           body: |
             Automated patch version bump following a successful build of
             `program-service:${{ steps.bump.outputs.current }}` (commit ${{ github.sha }}).
