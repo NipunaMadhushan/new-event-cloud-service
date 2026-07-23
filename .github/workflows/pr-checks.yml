@@ -1,0 +1,64 @@
+name: PR Checks
+
+# Required status checks for main, run on every pull request. Build-only —
+# nothing here pushes an image or touches AWS/the cluster, so it needs no
+# registry login and no OIDC credentials. Deploys still only happen via the
+# existing per-service workflows on a real push to main.
+
+on:
+  pull_request:
+    branches: [main]
+
+jobs:
+  build-services:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - name: event-service
+            context: services/event-service
+          - name: program-service
+            context: services/program-service
+          - name: registration-service
+            context: services/registration-service
+          - name: analytics-service
+            context: services/analytics-service
+          - name: frontend
+            context: frontend
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Docker Buildx
+        uses: docker/setup-buildx-action@v3
+
+      - name: Build ${{ matrix.name }} (validate only, no push)
+        uses: docker/build-push-action@v6
+        with:
+          context: ${{ matrix.context }}
+          push: false
+          cache-from: type=gha,scope=${{ matrix.name }}
+          cache-to: type=gha,mode=max,scope=${{ matrix.name }}
+
+  validate-observability-charts:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Add upstream Helm repos
+        run: |
+          helm repo add prometheus-community https://prometheus-community.github.io/helm-charts
+          helm repo add open-telemetry https://open-telemetry.github.io/opentelemetry-helm-charts
+          helm repo add fluent https://fluent.github.io/helm-charts
+          helm repo update
+
+      - name: Validate charts render
+        run: |
+          helm template kube-prometheus-stack prometheus-community/kube-prometheus-stack \
+            -f helm/observability/prometheus-values.yaml --namespace observability > /dev/null
+          helm template otel-collector open-telemetry/opentelemetry-collector \
+            -f helm/observability/otel-collector-values.yaml --namespace observability > /dev/null
+          helm template fluent-bit fluent/fluent-bit \
+            -f helm/observability/fluent-bit-values.yaml --namespace observability > /dev/null
