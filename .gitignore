@@ -17,3 +17,5 @@ Config.toml
 # per DEPLOYMENT_GUIDE.md §7 — never belong in version control)
 lambda/*/node_modules/
 lambda/*/function.zip
+
+.DS_Store

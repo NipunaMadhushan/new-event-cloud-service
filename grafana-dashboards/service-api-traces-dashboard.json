@@ -1,0 +1,334 @@
+{
+  "apiVersion": "dashboard.grafana.app/v2",
+  "kind": "Dashboard",
+  "metadata": {
+    "name": "adqw8mm",
+    "namespace": "default",
+    "uid": "18196d60-83a4-4c8a-9f02-fa779fc9af17",
+    "resourceVersion": "1784655180416992",
+    "generation": 3,
+    "creationTimestamp": "2026-07-21T06:30:11Z",
+    "labels": {
+      "grafana.app/deprecatedInternalID": "3294442745700352"
+    },
+    "annotations": {
+      "grafana.app/createdBy": "user:afsldkpxqqcjke",
+      "grafana.app/folder": "",
+      "grafana.app/saved-from-ui": "Grafana v13.1.0 (b309c9bb3b)",
+      "grafana.app/updatedBy": "user:afsldkpxqqcjke",
+      "grafana.app/updatedTimestamp": "2026-07-21T17:33:00Z"
+    }
+  },
+  "spec": {
+    "annotations": [
+      {
+        "kind": "AnnotationQuery",
+        "spec": {
+          "query": {
+            "kind": "DataQuery",
+            "group": "grafana",
+            "version": "v0",
+            "datasource": {
+              "name": "-- Grafana --"
+            },
+            "spec": {}
+          },
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations & Alerts",
+          "builtIn": true
+        }
+      }
+    ],
+    "cursorSync": "Off",
+    "editable": true,
+    "elements": {
+      "panel-1": {
+        "kind": "Panel",
+        "spec": {
+          "id": 1,
+          "title": "Service API Traces",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-clickhouse-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "PDEE91DDB90597936"
+                      },
+                      "spec": {
+                        "builderOptions": {
+                          "columns": [
+                            {
+                              "hint": "trace_id",
+                              "name": "TraceId"
+                            },
+                            {
+                              "hint": "trace_span_id",
+                              "name": "SpanId"
+                            },
+                            {
+                              "hint": "trace_parent_span_id",
+                              "name": "ParentSpanId"
+                            },
+                            {
+                              "hint": "trace_service_name",
+                              "name": "ServiceName"
+                            },
+                            {
+                              "hint": "trace_operation_name",
+                              "name": "SpanName"
+                            },
+                            {
+                              "hint": "time",
+                              "name": "Timestamp"
+                            },
+                            {
+                              "hint": "trace_duration_time",
+                              "name": "Duration"
+                            },
+                            {
+                              "hint": "trace_tags",
+                              "name": "SpanAttributes"
+                            },
+                            {
+                              "hint": "trace_service_tags",
+                              "name": "ResourceAttributes"
+                            },
+                            {
+                              "hint": "trace_kind",
+                              "name": "SpanKind"
+                            },
+                            {
+                              "hint": "trace_status_code",
+                              "name": "StatusCode"
+                            },
+                            {
+                              "hint": "trace_status_message",
+                              "name": "StatusMessage"
+                            },
+                            {
+                              "hint": "trace_state",
+                              "name": "TraceState"
+                            }
+                          ],
+                          "database": "otel",
+                          "filters": [
+                            {
+                              "condition": "AND",
+                              "filterType": "custom",
+                              "hint": "time",
+                              "key": "",
+                              "operator": "WITH IN DASHBOARD TIME RANGE",
+                              "type": "datetime"
+                            },
+                            {
+                              "condition": "AND",
+                              "filterType": "custom",
+                              "hint": "trace_parent_span_id",
+                              "key": "",
+                              "operator": "IS EMPTY",
+                              "type": "string",
+                              "value": ""
+                            },
+                            {
+                              "condition": "AND",
+                              "filterType": "custom",
+                              "hint": "trace_duration_time",
+                              "key": "",
+                              "operator": ">",
+                              "type": "UInt64",
+                              "value": 0
+                            },
+                            {
+                              "condition": "AND",
+                              "filterType": "custom",
+                              "hint": "trace_service_name",
+                              "key": "",
+                              "operator": "IS ANYTHING",
+                              "type": "string",
+                              "value": ""
+                            },
+                            {
+                              "condition": "AND",
+                              "filterType": "custom",
+                              "key": "SpanName",
+                              "label": "SpanName",
+                              "operator": "NOT ILIKE",
+                              "type": "LowCardinality(String)",
+                              "value": "get /metrics"
+                            },
+                            {
+                              "condition": "AND",
+                              "filterType": "custom",
+                              "key": "SpanName",
+                              "label": "SpanName",
+                              "operator": "NOT ILIKE",
+                              "type": "LowCardinality(String)",
+                              "value": "get /healthz"
+                            }
+                          ],
+                          "limit": 1000,
+                          "meta": {
+                            "flattenNested": false,
+                            "hasTraceTimestampTable": true,
+                            "isTraceIdMode": true,
+                            "otelEnabled": true,
+                            "otelVersion": "latest",
+                            "tagsAreJSON": false,
+                            "traceDurationUnit": "nanoseconds",
+                            "traceEventsColumnPrefix": "Events",
+                            "traceId": "",
+                            "traceLinksColumnPrefix": "Links"
+                          },
+                          "mode": "list",
+                          "orderBy": [
+                            {
+                              "default": true,
+                              "dir": "DESC",
+                              "hint": "time",
+                              "name": ""
+                            },
+                            {
+                              "default": true,
+                              "dir": "DESC",
+                              "hint": "trace_duration_time",
+                              "name": ""
+                            }
+                          ],
+                          "queryType": "traces",
+                          "table": "otel_traces"
+                        },
+                        "editorType": "builder",
+                        "format": 3,
+                        "meta": {
+                          "builderOptions": {
+                            "columns": [],
+                            "database": "",
+                            "limit": 1000,
+                            "mode": "list",
+                            "queryType": "table",
+                            "table": ""
+                          }
+                        },
+                        "pluginVersion": "4.19.0",
+                        "queryType": "table",
+                        "rawSql": "SELECT \"TraceId\" as traceID, \"ServiceName\" as serviceName, \"SpanName\" as operationName, \"Timestamp\" as startTime, multiply(\"Duration\", 0.000001) as duration FROM \"otel\".\"otel_traces\" WHERE ( Timestamp >= $__fromTime AND Timestamp <= $__toTime ) AND ( ParentSpanId = '' ) AND ( Duration > 0 ) AND ( NOT ( SpanName ILIKE '%get /metrics%' ) ) AND ( NOT ( SpanName ILIKE '%get /healthz%' ) ) ORDER BY Timestamp DESC, Duration DESC LIMIT 1000"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "table",
+            "version": "13.1.0",
+            "spec": {
+              "options": {
+                "cellHeight": "sm",
+                "showHeader": true
+              },
+              "fieldConfig": {
+                "defaults": {
+                  "thresholds": {
+                    "mode": "absolute",
+                    "steps": [
+                      {
+                        "value": 0,
+                        "color": "green"
+                      },
+                      {
+                        "value": 80,
+                        "color": "red"
+                      }
+                    ]
+                  },
+                  "custom": {
+                    "align": "auto",
+                    "cellOptions": {
+                      "type": "auto"
+                    },
+                    "footer": {
+                      "reducers": []
+                    },
+                    "inspect": false
+                  }
+                },
+                "overrides": []
+              }
+            }
+          }
+        }
+      }
+    },
+    "layout": {
+      "kind": "GridLayout",
+      "spec": {
+        "items": [
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 0,
+              "width": 12,
+              "height": 8,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-1"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "links": [],
+    "liveNow": false,
+    "preload": false,
+    "tags": [],
+    "timeSettings": {
+      "timezone": "browser",
+      "from": "now-12h",
+      "to": "now",
+      "autoRefresh": "",
+      "autoRefreshIntervals": [
+        "5s",
+        "10s",
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "1d"
+      ],
+      "hideTimepicker": false,
+      "fiscalYearStartMonth": 0
+    },
+    "title": "Service API Traces",
+    "variables": [],
+    "preferences": {
+      "layout": {
+        "kind": "GridLayout",
+        "spec": {
+          "items": []
+        }
+      }
+    }
+  }
+}

@@ -1,0 +1,32 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "EksFullAccess",
+            "Effect": "Allow",
+            "Action": "eks:*",
+            "Resource": "*"
+        },
+        {
+            "Sid": "SsmForEksAmiLookup",
+            "Effect": "Allow",
+            "Action": ["ssm:GetParameter", "ssm:GetParameters"],
+            "Resource": [
+                "arn:aws:ssm:*:<ACCOUNT_ID>:parameter/aws/*",
+                "arn:aws:ssm:*::parameter/aws/*"
+            ]
+        },
+        {
+            "Sid": "KmsForEksEncryption",
+            "Effect": "Allow",
+            "Action": ["kms:CreateGrant", "kms:DescribeKey"],
+            "Resource": "*"
+        },
+        {
+            "Sid": "LogsRetentionForEks",
+            "Effect": "Allow",
+            "Action": "logs:PutRetentionPolicy",
+            "Resource": "*"
+        }
+    ]
+}
