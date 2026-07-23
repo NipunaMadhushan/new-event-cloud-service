@@ -1,0 +1,150 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "RdsDescribeReadOnly",
+            "Effect": "Allow",
+            "Action": ["rds:Describe*", "rds:ListTagsForResource"],
+            "Resource": "*"
+        },
+        {
+            "Sid": "RdsCreateInstanceBroad",
+            "Effect": "Allow",
+            "Action": "rds:CreateDBInstance",
+            "Resource": "*"
+        },
+        {
+            "Sid": "RdsManageProjectInstance",
+            "Effect": "Allow",
+            "Action": [
+                "rds:DeleteDBInstance",
+                "rds:ModifyDBInstance",
+                "rds:RebootDBInstance",
+                "rds:AddTagsToResource",
+                "rds:CreateDBSnapshot",
+                "rds:StopDBInstance",
+                "rds:StartDBInstance"
+            ],
+            "Resource": "arn:aws:rds:*:<ACCOUNT_ID>:db:new-event-*"
+        },
+        {
+            "Sid": "RdsManageProjectSnapshots",
+            "Effect": "Allow",
+            "Action": ["rds:DeleteDBSnapshot"],
+            "Resource": "arn:aws:rds:*:<ACCOUNT_ID>:snapshot:new-event-*"
+        },
+        {
+            "Sid": "RdsManageProjectSubnetGroup",
+            "Effect": "Allow",
+            "Action": [
+                "rds:CreateDBSubnetGroup",
+                "rds:ModifyDBSubnetGroup",
+                "rds:DeleteDBSubnetGroup"
+            ],
+            "Resource": "arn:aws:rds:*:<ACCOUNT_ID>:subgrp:new-event-*"
+        },
+        {
+            "Sid": "S3ProjectBucketsOnly",
+            "Effect": "Allow",
+            "Action": [
+                "s3:CreateBucket",
+                "s3:PutLifecycleConfiguration",
+                "s3:GetBucketLocation",
+                "s3:ListBucket",
+                "s3:PutObject",
+                "s3:GetObject",
+                "s3:DeleteObject"
+            ],
+            "Resource": [
+                "arn:aws:s3:::new-event-*",
+                "arn:aws:s3:::new-event-*/*"
+            ]
+        },
+        {
+            "Sid": "SesForSeatAlerts",
+            "Effect": "Allow",
+            "Action": [
+                "ses:VerifyEmailIdentity",
+                "ses:ListIdentities",
+                "ses:GetIdentityVerificationAttributes",
+                "ses:SendEmail",
+                "ses:SendRawEmail"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "LambdaProjectFunctionsOnly",
+            "Effect": "Allow",
+            "Action": [
+                "lambda:CreateFunction",
+                "lambda:UpdateFunctionCode",
+                "lambda:UpdateFunctionConfiguration",
+                "lambda:DeleteFunction",
+                "lambda:GetFunction",
+                "lambda:GetFunctionConfiguration",
+                "lambda:InvokeFunction",
+                "lambda:AddPermission",
+                "lambda:RemovePermission",
+                "lambda:TagResource"
+            ],
+            "Resource": [
+                "arn:aws:lambda:*:<ACCOUNT_ID>:function:seat-threshold-notifier",
+                "arn:aws:lambda:*:<ACCOUNT_ID>:function:clickhouse-quicksight-export"
+            ]
+        },
+        {
+            "Sid": "ApiGatewayForNotifierLambda",
+            "Effect": "Allow",
+            "Action": "apigateway:*",
+            "Resource": "arn:aws:apigateway:*::/*"
+        },
+        {
+            "Sid": "EventBridgeScheduleForExport",
+            "Effect": "Allow",
+            "Action": [
+                "events:PutRule",
+                "events:PutTargets",
+                "events:RemoveTargets",
+                "events:DeleteRule",
+                "events:DescribeRule"
+            ],
+            "Resource": "arn:aws:events:*:<ACCOUNT_ID>:rule/new-event-*"
+        },
+        {
+            "Sid": "GlueAthenaForQuickSightBridge",
+            "Effect": "Allow",
+            "Action": [
+                "glue:CreateCrawler",
+                "glue:StartCrawler",
+                "glue:GetCrawler",
+                "glue:DeleteCrawler",
+                "glue:GetDatabase",
+                "glue:CreateDatabase",
+                "glue:GetTable",
+                "glue:GetTables",
+                "athena:StartQueryExecution",
+                "athena:GetQueryExecution",
+                "athena:GetQueryResults",
+                "athena:GetWorkGroup"
+            ],
+            "Resource": "*"
+        },
+        {
+            "Sid": "ViewLambdaLogs",
+            "Effect": "Allow",
+            "Action": [
+                "logs:DescribeLogGroups",
+                "logs:DescribeLogStreams",
+                "logs:GetLogEvents",
+                "logs:FilterLogEvents"
+            ],
+            "Resource": "arn:aws:logs:*:<ACCOUNT_ID>:log-group:/aws/lambda/*"
+        },
+        {
+            "Sid": "BudgetsForCostAlerts",
+            "Effect": "Allow",
+            "Action": ["budgets:ViewBudget", "budgets:ModifyBudget"],
+            "Resource": "*"
+        }
+    ]
+}

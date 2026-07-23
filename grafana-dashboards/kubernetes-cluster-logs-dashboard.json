@@ -1,0 +1,716 @@
+{
+  "apiVersion": "dashboard.grafana.app/v2",
+  "kind": "Dashboard",
+  "metadata": {
+    "name": "adhwcxg",
+    "namespace": "default",
+    "uid": "54995e85-4376-4007-9408-f7f4886a84ef",
+    "resourceVersion": "1784654214115011",
+    "generation": 8,
+    "creationTimestamp": "2026-07-21T07:54:07Z",
+    "labels": {
+      "grafana.app/deprecatedInternalID": "3315563910078464"
+    },
+    "annotations": {
+      "grafana.app/createdBy": "user:afsldkpxqqcjke",
+      "grafana.app/folder": "",
+      "grafana.app/saved-from-ui": "Grafana v13.1.0 (b309c9bb3b)",
+      "grafana.app/updatedBy": "user:afsldkpxqqcjke",
+      "grafana.app/updatedTimestamp": "2026-07-21T17:16:54Z"
+    }
+  },
+  "spec": {
+    "annotations": [
+      {
+        "kind": "AnnotationQuery",
+        "spec": {
+          "query": {
+            "kind": "DataQuery",
+            "group": "grafana",
+            "version": "v0",
+            "datasource": {
+              "name": "-- Grafana --"
+            },
+            "spec": {}
+          },
+          "enable": true,
+          "hide": true,
+          "iconColor": "rgba(0, 211, 255, 1)",
+          "name": "Annotations & Alerts",
+          "builtIn": true
+        }
+      }
+    ],
+    "cursorSync": "Off",
+    "editable": true,
+    "elements": {
+      "panel-1": {
+        "kind": "Panel",
+        "spec": {
+          "id": 1,
+          "title": "OTEL Collector Logs",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-clickhouse-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "PDEE91DDB90597936"
+                      },
+                      "spec": {
+                        "builderOptions": {
+                          "columns": [
+                            {
+                              "hint": "time",
+                              "name": "Timestamp",
+                              "type": "DateTime64(9)"
+                            },
+                            {
+                              "hint": "log_message",
+                              "name": "Body",
+                              "type": "String"
+                            },
+                            {
+                              "hint": "log_level",
+                              "name": "SeverityText",
+                              "type": "LowCardinality(String)"
+                            }
+                          ],
+                          "database": "otel",
+                          "filters": [
+                            {
+                              "condition": "AND",
+                              "filterType": "custom",
+                              "hint": "filter_time",
+                              "key": "",
+                              "operator": "WITH IN DASHBOARD TIME RANGE",
+                              "type": "datetime"
+                            },
+                            {
+                              "condition": "AND",
+                              "filterType": "custom",
+                              "hint": "log_level",
+                              "key": "",
+                              "operator": "IS ANYTHING",
+                              "type": "string",
+                              "value": ""
+                            }
+                          ],
+                          "limit": 1000,
+                          "meta": {
+                            "otelVersion": "latest"
+                          },
+                          "mode": "list",
+                          "orderBy": [
+                            {
+                              "default": true,
+                              "dir": "DESC",
+                              "hint": "filter_time",
+                              "name": ""
+                            },
+                            {
+                              "default": true,
+                              "dir": "DESC",
+                              "hint": "time",
+                              "name": ""
+                            }
+                          ],
+                          "queryType": "logs",
+                          "table": "otel_logs"
+                        },
+                        "editorType": "sql",
+                        "format": 2,
+                        "meta": {
+                          "builderOptions": {
+                            "columns": [
+                              {
+                                "hint": "time",
+                                "name": "Timestamp",
+                                "type": "DateTime64(9)"
+                              },
+                              {
+                                "hint": "log_message",
+                                "name": "Body",
+                                "type": "String"
+                              },
+                              {
+                                "hint": "log_level",
+                                "name": "SeverityText",
+                                "type": "LowCardinality(String)"
+                              }
+                            ],
+                            "database": "otel",
+                            "filters": [
+                              {
+                                "condition": "AND",
+                                "filterType": "custom",
+                                "hint": "filter_time",
+                                "key": "",
+                                "operator": "WITH IN DASHBOARD TIME RANGE",
+                                "type": "datetime"
+                              },
+                              {
+                                "condition": "AND",
+                                "filterType": "custom",
+                                "hint": "log_level",
+                                "key": "",
+                                "operator": "IS ANYTHING",
+                                "type": "string",
+                                "value": ""
+                              }
+                            ],
+                            "limit": 1000,
+                            "meta": {
+                              "otelVersion": "latest"
+                            },
+                            "mode": "list",
+                            "orderBy": [
+                              {
+                                "default": true,
+                                "dir": "DESC",
+                                "hint": "filter_time",
+                                "name": ""
+                              },
+                              {
+                                "default": true,
+                                "dir": "DESC",
+                                "hint": "time",
+                                "name": ""
+                              }
+                            ],
+                            "queryType": "logs",
+                            "table": "otel_logs"
+                          }
+                        },
+                        "pluginVersion": "4.19.0",
+                        "queryType": "logs",
+                        "rawSql": "SELECT Timestamp, Body FROM otel.otel_logs\nWHERE Body ILIKE '%\"service.name\": \"otelcol-contrib\"%' OR Body ILIKE '%otel-collector%'\nORDER BY Timestamp DESC LIMIT 100"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "logs",
+            "version": "13.1.0",
+            "spec": {
+              "options": {
+                "dedupStrategy": "none",
+                "enableInfiniteScrolling": false,
+                "enableLogDetails": true,
+                "prettifyLogMessage": true,
+                "showControls": false,
+                "showFieldSelector": false,
+                "showLevel": true,
+                "showTime": false,
+                "sortOrder": "Descending",
+                "timestampResolution": "ms",
+                "unwrappedColumns": false,
+                "wrapLogMessage": false
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-2": {
+        "kind": "Panel",
+        "spec": {
+          "id": 2,
+          "title": "Service API logs",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-clickhouse-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "PDEE91DDB90597936"
+                      },
+                      "spec": {
+                        "builderOptions": {
+                          "columns": [
+                            {
+                              "hint": "filter_time",
+                              "name": "TimestampTime"
+                            },
+                            {
+                              "hint": "time",
+                              "name": "Timestamp",
+                              "type": "DateTime64(9)"
+                            },
+                            {
+                              "hint": "log_message",
+                              "name": "Body",
+                              "type": "String"
+                            },
+                            {
+                              "hint": "log_level",
+                              "name": "SeverityText",
+                              "type": "LowCardinality(String)"
+                            },
+                            {
+                              "hint": "trace_id",
+                              "name": "TraceId",
+                              "type": "String"
+                            },
+                            {
+                              "hint": "resource_attributes",
+                              "name": "ResourceAttributes",
+                              "type": "Map(LowCardinality(String), String)"
+                            },
+                            {
+                              "hint": "scope_attributes",
+                              "name": "ScopeAttributes",
+                              "type": "Map(LowCardinality(String), String)"
+                            },
+                            {
+                              "hint": "log_attributes",
+                              "name": "LogAttributes",
+                              "type": "Map(LowCardinality(String), String)"
+                            }
+                          ],
+                          "database": "otel",
+                          "filters": [
+                            {
+                              "condition": "AND",
+                              "filterType": "custom",
+                              "hint": "filter_time",
+                              "key": "",
+                              "operator": "WITH IN DASHBOARD TIME RANGE",
+                              "type": "datetime"
+                            },
+                            {
+                              "condition": "AND",
+                              "filterType": "custom",
+                              "hint": "log_level",
+                              "key": "",
+                              "operator": "IS ANYTHING",
+                              "type": "string",
+                              "value": ""
+                            }
+                          ],
+                          "limit": 1000,
+                          "meta": {
+                            "otelEnabled": false,
+                            "otelVersion": "latest"
+                          },
+                          "mode": "list",
+                          "orderBy": [
+                            {
+                              "default": true,
+                              "dir": "DESC",
+                              "hint": "filter_time",
+                              "name": ""
+                            },
+                            {
+                              "default": true,
+                              "dir": "DESC",
+                              "hint": "time",
+                              "name": ""
+                            }
+                          ],
+                          "queryType": "logs",
+                          "table": "otel_logs"
+                        },
+                        "editorType": "sql",
+                        "format": 2,
+                        "meta": {
+                          "builderOptions": {
+                            "columns": [
+                              {
+                                "hint": "filter_time",
+                                "name": "TimestampTime"
+                              },
+                              {
+                                "hint": "time",
+                                "name": "Timestamp",
+                                "type": "DateTime64(9)"
+                              },
+                              {
+                                "hint": "log_message",
+                                "name": "Body",
+                                "type": "String"
+                              },
+                              {
+                                "hint": "log_level",
+                                "name": "SeverityText",
+                                "type": "LowCardinality(String)"
+                              },
+                              {
+                                "hint": "trace_id",
+                                "name": "TraceId",
+                                "type": "String"
+                              },
+                              {
+                                "hint": "resource_attributes",
+                                "name": "ResourceAttributes",
+                                "type": "Map(LowCardinality(String), String)"
+                              },
+                              {
+                                "hint": "scope_attributes",
+                                "name": "ScopeAttributes",
+                                "type": "Map(LowCardinality(String), String)"
+                              },
+                              {
+                                "hint": "log_attributes",
+                                "name": "LogAttributes",
+                                "type": "Map(LowCardinality(String), String)"
+                              }
+                            ],
+                            "database": "otel",
+                            "filters": [
+                              {
+                                "condition": "AND",
+                                "filterType": "custom",
+                                "hint": "filter_time",
+                                "key": "",
+                                "operator": "WITH IN DASHBOARD TIME RANGE",
+                                "type": "datetime"
+                              },
+                              {
+                                "condition": "AND",
+                                "filterType": "custom",
+                                "hint": "log_level",
+                                "key": "",
+                                "operator": "IS ANYTHING",
+                                "type": "string",
+                                "value": ""
+                              }
+                            ],
+                            "limit": 1000,
+                            "meta": {
+                              "otelEnabled": false,
+                              "otelVersion": "latest"
+                            },
+                            "mode": "list",
+                            "orderBy": [
+                              {
+                                "default": true,
+                                "dir": "DESC",
+                                "hint": "filter_time",
+                                "name": ""
+                              },
+                              {
+                                "default": true,
+                                "dir": "DESC",
+                                "hint": "time",
+                                "name": ""
+                              }
+                            ],
+                            "queryType": "logs",
+                            "table": "otel_logs"
+                          }
+                        },
+                        "pluginVersion": "4.19.0",
+                        "queryType": "logs",
+                        "rawSql": "SELECT\n  Timestamp as \"timestamp\",\n  Body as \"body\",\n  SeverityText as \"level\",\n  TraceId as \"traceID\",\n  ResourceAttributes,\n  ScopeAttributes,\n  LogAttributes\nFROM otel.otel_logs\nWHERE Timestamp >= $__fromTime AND Timestamp <= $__toTime\n  AND Body ILIKE '%cmm707%'\nORDER BY Timestamp DESC\nLIMIT 1000"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "logs",
+            "version": "13.1.0",
+            "spec": {
+              "options": {
+                "dedupStrategy": "none",
+                "enableInfiniteScrolling": false,
+                "enableLogDetails": true,
+                "prettifyLogMessage": true,
+                "showControls": false,
+                "showFieldSelector": false,
+                "showLevel": true,
+                "showTime": false,
+                "sortOrder": "Descending",
+                "timestampResolution": "ms",
+                "unwrappedColumns": false,
+                "wrapLogMessage": false
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-3": {
+        "kind": "Panel",
+        "spec": {
+          "id": 3,
+          "title": "Prometheus Logs",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-clickhouse-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "PDEE91DDB90597936"
+                      },
+                      "spec": {
+                        "editorType": "sql",
+                        "format": 2,
+                        "meta": {
+                          "builderOptions": {
+                            "columns": [],
+                            "database": "",
+                            "limit": 1000,
+                            "mode": "list",
+                            "queryType": "table",
+                            "table": ""
+                          }
+                        },
+                        "pluginVersion": "4.19.0",
+                        "queryType": "logs",
+                        "rawSql": "SELECT Timestamp, Body FROM otel.otel_logs\nWHERE Body ILIKE '%Prometheus Operator%' OR Body ILIKE '%\"pod_name\":\"kube-prometheus-stack-operator%'\nORDER BY Timestamp DESC LIMIT 100"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "logs",
+            "version": "13.1.0",
+            "spec": {
+              "options": {
+                "dedupStrategy": "none",
+                "enableInfiniteScrolling": false,
+                "enableLogDetails": true,
+                "prettifyLogMessage": true,
+                "showControls": false,
+                "showFieldSelector": false,
+                "showLevel": true,
+                "showTime": false,
+                "sortOrder": "Descending",
+                "timestampResolution": "ms",
+                "unwrappedColumns": false,
+                "wrapLogMessage": false
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
+      },
+      "panel-4": {
+        "kind": "Panel",
+        "spec": {
+          "id": 4,
+          "title": "Grafana Logs",
+          "description": "",
+          "links": [],
+          "data": {
+            "kind": "QueryGroup",
+            "spec": {
+              "queries": [
+                {
+                  "kind": "PanelQuery",
+                  "spec": {
+                    "query": {
+                      "kind": "DataQuery",
+                      "group": "grafana-clickhouse-datasource",
+                      "version": "v0",
+                      "datasource": {
+                        "name": "PDEE91DDB90597936"
+                      },
+                      "spec": {
+                        "editorType": "sql",
+                        "format": 2,
+                        "meta": {
+                          "builderOptions": {
+                            "columns": [],
+                            "database": "",
+                            "limit": 1000,
+                            "mode": "list",
+                            "queryType": "table",
+                            "table": ""
+                          }
+                        },
+                        "pluginVersion": "4.19.0",
+                        "queryType": "logs",
+                        "rawSql": "SELECT Timestamp, Body FROM otel.otel_logs\nWHERE Body ILIKE '%\"pod_name\":\"kube-prometheus-stack-grafana%'\nORDER BY Timestamp DESC LIMIT 100"
+                      }
+                    },
+                    "refId": "A",
+                    "hidden": false
+                  }
+                }
+              ],
+              "transformations": [],
+              "queryOptions": {}
+            }
+          },
+          "vizConfig": {
+            "kind": "VizConfig",
+            "group": "logs",
+            "version": "13.1.0",
+            "spec": {
+              "options": {
+                "dedupStrategy": "none",
+                "enableInfiniteScrolling": false,
+                "enableLogDetails": true,
+                "prettifyLogMessage": true,
+                "showControls": false,
+                "showFieldSelector": false,
+                "showLevel": true,
+                "showTime": false,
+                "sortOrder": "Descending",
+                "timestampResolution": "ms",
+                "unwrappedColumns": false,
+                "wrapLogMessage": false
+              },
+              "fieldConfig": {
+                "defaults": {},
+                "overrides": []
+              }
+            }
+          }
+        }
+      }
+    },
+    "layout": {
+      "kind": "GridLayout",
+      "spec": {
+        "items": [
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 0,
+              "width": 12,
+              "height": 8,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-2"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 12,
+              "y": 0,
+              "width": 12,
+              "height": 8,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-1"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 0,
+              "y": 8,
+              "width": 12,
+              "height": 8,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-3"
+              }
+            }
+          },
+          {
+            "kind": "GridLayoutItem",
+            "spec": {
+              "x": 12,
+              "y": 8,
+              "width": 12,
+              "height": 8,
+              "element": {
+                "kind": "ElementReference",
+                "name": "panel-4"
+              }
+            }
+          }
+        ]
+      }
+    },
+    "links": [],
+    "liveNow": false,
+    "preload": false,
+    "tags": [],
+    "timeSettings": {
+      "timezone": "browser",
+      "from": "now-12h",
+      "to": "now",
+      "autoRefresh": "",
+      "autoRefreshIntervals": [
+        "5s",
+        "10s",
+        "30s",
+        "1m",
+        "5m",
+        "15m",
+        "30m",
+        "1h",
+        "2h",
+        "1d"
+      ],
+      "hideTimepicker": false,
+      "fiscalYearStartMonth": 0
+    },
+    "title": "Kubernetes Cluster Logs",
+    "variables": [],
+    "preferences": {
+      "layout": {
+        "kind": "GridLayout",
+        "spec": {
+          "items": []
+        }
+      }
+    }
+  }
+}

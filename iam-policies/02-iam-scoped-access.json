@@ -1,0 +1,94 @@
+{
+    "Version": "2012-10-17",
+    "Statement": [
+        {
+            "Sid": "ManageEksctlAndProjectRoles",
+            "Effect": "Allow",
+            "Action": [
+                "iam:CreateInstanceProfile",
+                "iam:DeleteInstanceProfile",
+                "iam:GetInstanceProfile",
+                "iam:RemoveRoleFromInstanceProfile",
+                "iam:GetRole",
+                "iam:CreateRole",
+                "iam:DeleteRole",
+                "iam:AttachRolePolicy",
+                "iam:PutRolePolicy",
+                "iam:UpdateAssumeRolePolicy",
+                "iam:AddRoleToInstanceProfile",
+                "iam:ListInstanceProfilesForRole",
+                "iam:PassRole",
+                "iam:DetachRolePolicy",
+                "iam:DeleteRolePolicy",
+                "iam:GetRolePolicy",
+                "iam:ListAttachedRolePolicies",
+                "iam:TagRole",
+                "iam:UntagRole",
+                "iam:GetPolicy",
+                "iam:CreatePolicy",
+                "iam:DeletePolicy",
+                "iam:ListPolicyVersions"
+            ],
+            "Resource": [
+                "arn:aws:iam::<ACCOUNT_ID>:instance-profile/eksctl-*",
+                "arn:aws:iam::<ACCOUNT_ID>:role/eksctl-*",
+                "arn:aws:iam::<ACCOUNT_ID>:policy/eksctl-*",
+                "arn:aws:iam::<ACCOUNT_ID>:role/eksctl-managed-*",
+                "arn:aws:iam::<ACCOUNT_ID>:role/aws-service-role/eks-nodegroup.amazonaws.com/AWSServiceRoleForAmazonEKSNodegroup",
+                "arn:aws:iam::<ACCOUNT_ID>:role/new-event-*",
+                "arn:aws:iam::<ACCOUNT_ID>:policy/new-event-*"
+            ]
+        },
+        {
+            "Sid": "OidcProviderForIrsaAndGithubActions",
+            "Effect": "Allow",
+            "Action": [
+                "iam:GetOpenIDConnectProvider",
+                "iam:CreateOpenIDConnectProvider",
+                "iam:DeleteOpenIDConnectProvider",
+                "iam:TagOpenIDConnectProvider"
+            ],
+            "Resource": "arn:aws:iam::<ACCOUNT_ID>:oidc-provider/*"
+        },
+        {
+            "Sid": "ReadOwnIdentity",
+            "Effect": "Allow",
+            "Action": ["iam:GetRole", "iam:GetUser"],
+            "Resource": [
+                "arn:aws:iam::<ACCOUNT_ID>:role/*",
+                "arn:aws:iam::<ACCOUNT_ID>:user/*"
+            ]
+        },
+        {
+            "Sid": "SelfInspectOwnPoliciesReadOnly",
+            "Effect": "Allow",
+            "Action": [
+                "iam:GetPolicy",
+                "iam:GetPolicyVersion",
+                "iam:ListPolicyVersions",
+                "iam:ListAttachedUserPolicies"
+            ],
+            "Resource": [
+                "arn:aws:iam::<ACCOUNT_ID>:policy/cmm707-*",
+                "arn:aws:iam::<ACCOUNT_ID>:policy/CMM707*",
+                "arn:aws:iam::<ACCOUNT_ID>:user/cmm707-coursework"
+            ]
+        },
+        {
+            "Sid": "ServiceLinkedRolesForProjectServices",
+            "Effect": "Allow",
+            "Action": "iam:CreateServiceLinkedRole",
+            "Resource": "*",
+            "Condition": {
+                "StringEquals": {
+                    "iam:AWSServiceName": [
+                        "eks.amazonaws.com",
+                        "eks-nodegroup.amazonaws.com",
+                        "eks-fargate.amazonaws.com",
+                        "rds.amazonaws.com"
+                    ]
+                }
+            }
+        }
+    ]
+}
